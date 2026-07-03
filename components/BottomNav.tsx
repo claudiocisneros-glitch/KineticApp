@@ -18,16 +18,19 @@ export default function BottomNav() {
 
   return (
     <nav
-      className="backdrop-blur-[12px] bg-[rgba(14,14,16,0.95)] border-t border-[rgba(72,71,74,0.1)] fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around pt-[17px] px-6 w-full max-w-[390px] mx-auto"
+      className="backdrop-blur-[12px] bg-[rgba(14,14,16,0.95)] border-t border-[rgba(72,71,74,0.1)] fixed bottom-0 left-0 right-0 z-50 grid grid-cols-3 items-center pt-[17px] px-6 w-full max-w-[390px] mx-auto"
       style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
     >
-      <Link href="/" className={linkClass(pathname === "/")}>
+      <Link
+        href="/"
+        className={`${linkClass(pathname === "/")} justify-self-start`}
+      >
         <span>Inicio</span>
       </Link>
 
       <Link
         href="/checkin"
-        className="rounded-full p-1 -mt-9 shadow-[0px_10px_15px_-3px_rgba(255,144,109,0.2),0px_4px_6px_-4px_rgba(255,144,109,0.2)] border-4 border-[#0e0e10]"
+        className="justify-self-center rounded-full p-1 -mt-9 shadow-[0px_10px_15px_-3px_rgba(255,144,109,0.2),0px_4px_6px_-4px_rgba(255,144,109,0.2)] border-4 border-[#0e0e10]"
         style={{
           backgroundImage:
             "linear-gradient(135deg, rgb(255, 120, 77) 0%, rgb(255, 102, 182) 100%)",
@@ -38,7 +41,10 @@ export default function BottomNav() {
         </span>
       </Link>
 
-      <Link href="/rewards" className={linkClass(pathname === "/rewards")}>
+      <Link
+        href="/rewards"
+        className={`${linkClass(pathname === "/rewards")} justify-self-end`}
+      >
         <span>Recompensas</span>
       </Link>
     </nav>

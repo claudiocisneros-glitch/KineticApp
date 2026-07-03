@@ -3,6 +3,10 @@
 // conectado a datos reales ni a sponsors reales. Los botones de acción
 // acá son decorativos a propósito, para no sugerir que hacen algo que
 // todavía no existe.
+// Las fotos son de stock (carpeta imgs/), solo para dar contexto visual.
+
+import imgYoga from "../../imgs/Img1.png";
+import imgSpinning from "../../imgs/Img4.png";
 
 function ProBadge() {
   return (
@@ -145,14 +149,14 @@ export function UpcomingActivities() {
       title: "Spinning Pro",
       time: "Hoy • 18:00",
       color: "text-[#ff7346]",
-      gradient: "linear-gradient(160deg, #ff784d 0%, #262528 75%)",
+      image: imgSpinning,
       cta: "Reservar ahora",
     },
     {
       title: "Zen Flow Yoga",
       time: "Mañana • 07:00",
       color: "text-[#ff66b6]",
-      gradient: "linear-gradient(160deg, #ff66b6 0%, #262528 75%)",
+      image: imgYoga,
       cta: "Reservar",
     },
   ];
@@ -170,9 +174,10 @@ export function UpcomingActivities() {
             key={a.title}
             className="relative rounded-3xl overflow-hidden w-60 aspect-[4/5] shrink-0 border border-[rgba(72,71,74,0.3)]"
           >
-            <div
-              className="absolute inset-0"
-              style={{ backgroundImage: a.gradient }}
+            <img
+              src={a.image.src}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-6 flex flex-col gap-3">

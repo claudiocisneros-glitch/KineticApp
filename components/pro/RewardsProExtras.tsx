@@ -1,5 +1,10 @@
 // Mismo criterio que components/pro/HomeProExtras.tsx: contenido de
 // muestra, sin conexión a sponsors reales, botones decorativos.
+// Las fotos son de stock (carpeta imgs/), solo para dar contexto visual.
+
+import imgAbWorkout from "../../imgs/Img3.png";
+import imgDeadlift from "../../imgs/Img2.png";
+import imgCombo from "../../imgs/Gemini_Generated_Image_vba6l5vba6l5vba6.png";
 
 function ProBadge() {
   return (
@@ -38,12 +43,12 @@ export function RecommendedForYou() {
     {
       name: "Bálsamo de Recuperación Pro",
       cost: "1.800 KP",
-      gradient: "linear-gradient(135deg, #ff784d 0%, #1f1f22 80%)",
+      image: imgAbWorkout,
     },
     {
       name: "Shaker de Rendimiento Steel",
       cost: "2.500 KP",
-      gradient: "linear-gradient(135deg, #ff66b6 0%, #1f1f22 80%)",
+      image: imgCombo,
     },
   ];
   return (
@@ -63,10 +68,13 @@ export function RecommendedForYou() {
             key={p.name}
             className="bg-[#131315] rounded-2xl overflow-hidden w-64 shrink-0"
           >
-            <div
-              className="h-32 w-full"
-              style={{ backgroundImage: p.gradient }}
-            />
+            <div className="h-32 w-full relative">
+              <img
+                src={p.image.src}
+                alt=""
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            </div>
             <div className="p-4 flex flex-col gap-2">
               <p className="text-[#f9f5f8] font-bold text-sm">{p.name}</p>
               <p className="text-[#ff784d] font-black text-xs">{p.cost}</p>
@@ -96,12 +104,10 @@ export function FeaturedPerks() {
         <ProBadge />
       </div>
       <div className="relative rounded-3xl overflow-hidden h-64">
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage:
-              "linear-gradient(160deg, #ff784d 0%, #b60077 55%, #131315 100%)",
-          }}
+        <img
+          src={imgDeadlift.src}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
         <div className="absolute top-4 left-4 flex gap-2">

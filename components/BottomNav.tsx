@@ -17,7 +17,10 @@ export default function BottomNav() {
     }`;
 
   return (
-    <nav className="backdrop-blur-[12px] bg-[rgba(14,14,16,0.95)] border-t border-[rgba(72,71,74,0.1)] fixed bottom-0 left-0 right-0 flex items-center justify-around pt-[17px] pb-4 px-6 max-w-[390px] mx-auto">
+    <nav
+      className="backdrop-blur-[12px] bg-[rgba(14,14,16,0.95)] border-t border-[rgba(72,71,74,0.1)] fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around pt-[17px] px-6 w-full max-w-[390px] mx-auto"
+      style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+    >
       <Link href="/" className={linkClass(pathname === "/")}>
         <span>Inicio</span>
       </Link>

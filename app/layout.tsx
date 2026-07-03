@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Montserrat, Inter } from "next/font/google";
 import "./globals.css";
 
@@ -22,6 +22,12 @@ export const metadata: Metadata = {
     icon: "/favicon.png",
     apple: "/favicon.png",
   },
+};
+
+// viewport-fit=cover: sin esto, env(safe-area-inset-bottom) siempre da 0 en
+// iOS y el tab bar fijo termina metido debajo del home indicator.
+export const viewport: Viewport = {
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

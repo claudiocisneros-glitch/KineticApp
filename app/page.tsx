@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isStaff } from "@/lib/auth/staff";
 import { getViewMode } from "@/lib/view-mode";
 import BottomNav from "@/components/BottomNav";
-import ViewModeToggle from "@/components/ViewModeToggle";
+import AvatarMenu from "@/components/AvatarMenu";
 import {
   AiSearchBar,
   KpiGrid,
@@ -50,15 +50,18 @@ export default async function HomePage() {
   return (
     <div className="bg-[#0e0e10] min-h-screen">
       {/* Header */}
-      <header className="bg-[#131315] flex items-center justify-between px-6 py-4 sticky top-0 z-10">
-        <img src={imgLogoIcon} alt="Kinetic Gym" className="h-7" />
-        <div className="flex items-center gap-3">
-          {staff && <ViewModeToggle currentMode={getViewMode()} />}
+      <header className="bg-[#131315] flex items-center justify-between px-6 py-4 sticky top-0 z-30">
+        <img src={imgLogoIcon} alt="Kinetic Gym" className="h-7 shrink-0" />
+        <div className="flex items-center gap-3 shrink-0">
           <img src={imgBellIcon} alt="Notificaciones" className="size-9" />
+          {staff && <AvatarMenu currentMode={getViewMode()} />}
         </div>
       </header>
 
-      <main className="flex flex-col gap-[22px] px-6 pt-1 pb-[100px]">
+      <main
+        className="flex flex-col gap-[22px] px-6 pt-1"
+        style={{ paddingBottom: "calc(100px + env(safe-area-inset-bottom))" }}
+      >
         {/* Bienvenida */}
         <div className="flex gap-3 items-center pt-2">
           <div className="border border-[#ff66b6] rounded-full size-8 shrink-0" />

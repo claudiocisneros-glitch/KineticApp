@@ -4,7 +4,7 @@ import { isStaff } from "@/lib/auth/staff";
 import { getViewMode } from "@/lib/view-mode";
 import RedeemButton from "@/components/RedeemButton";
 import BottomNav from "@/components/BottomNav";
-import ViewModeToggle from "@/components/ViewModeToggle";
+import AvatarMenu from "@/components/AvatarMenu";
 import {
   AiGoalNudge,
   RecommendedForYou,
@@ -72,16 +72,19 @@ export default async function RewardsPage() {
 
   return (
     <div className="bg-[#0e0e10] min-h-screen">
-      <header className="bg-[#131315] flex items-center justify-between px-6 h-16 sticky top-0 z-10">
-        <div className="flex items-center gap-4">
-          <img src={imgLogoIcon} alt="Kinetic Gym" className="h-7" />
-          <h1 className="font-black text-lg text-[#f9f5f8] tracking-[-0.9px] uppercase">
+      <header className="bg-[#131315] flex items-center justify-between px-6 h-16 sticky top-0 z-30">
+        <div className="flex items-center gap-4 min-w-0">
+          <img src={imgLogoIcon} alt="Kinetic Gym" className="h-7 shrink-0" />
+          <h1 className="font-black text-lg text-[#f9f5f8] tracking-[-0.9px] uppercase truncate">
             Recompensas
           </h1>
         </div>
-        <div className="flex items-center gap-3">
-          {staff && <ViewModeToggle currentMode={getViewMode()} />}
-          <div className="border border-[#ff66b6] rounded-full size-8" />
+        <div className="flex items-center gap-3 shrink-0">
+          {staff ? (
+            <AvatarMenu currentMode={getViewMode()} />
+          ) : (
+            <div className="border border-[#ff66b6] rounded-full size-8" />
+          )}
         </div>
       </header>
 
@@ -140,7 +143,10 @@ export default async function RewardsPage() {
         </div>
       )}
 
-      <main className="px-5 pt-8 pb-[110px] flex flex-col gap-8">
+      <main
+        className="px-5 pt-8 flex flex-col gap-8"
+        style={{ paddingBottom: "calc(110px + env(safe-area-inset-bottom))" }}
+      >
         <div className="flex flex-col gap-6">
           <h2 className="font-bold text-xl text-[#f9f5f8]">Canjear puntos</h2>
 

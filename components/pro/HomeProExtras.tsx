@@ -4,11 +4,6 @@
 // acá son decorativos a propósito, para no sugerir que hacen algo que
 // todavía no existe.
 
-const imgActivityCard1 =
-  "https://www.figma.com/api/mcp/asset/4be564bb-b38b-416c-8dfa-a7ac878f7f66";
-const imgActivityCard2 =
-  "https://www.figma.com/api/mcp/asset/b3040f46-4d6b-49fe-b200-d9f1ac3b8d2e";
-
 function ProBadge() {
   return (
     <span className="bg-[#ff906d]/10 text-[#ff906d] text-[9px] font-black uppercase tracking-[1px] px-2 py-1 rounded-full border border-[#ff906d]/20">
@@ -150,14 +145,14 @@ export function UpcomingActivities() {
       title: "Spinning Pro",
       time: "Hoy • 18:00",
       color: "text-[#ff7346]",
-      image: imgActivityCard1,
+      gradient: "linear-gradient(160deg, #ff784d 0%, #262528 75%)",
       cta: "Reservar ahora",
     },
     {
       title: "Zen Flow Yoga",
       time: "Mañana • 07:00",
       color: "text-[#ff66b6]",
-      image: imgActivityCard2,
+      gradient: "linear-gradient(160deg, #ff66b6 0%, #262528 75%)",
       cta: "Reservar",
     },
   ];
@@ -175,10 +170,9 @@ export function UpcomingActivities() {
             key={a.title}
             className="relative rounded-3xl overflow-hidden w-60 aspect-[4/5] shrink-0 border border-[rgba(72,71,74,0.3)]"
           >
-            <img
-              src={a.image}
-              alt=""
-              className="absolute inset-0 size-full object-cover"
+            <div
+              className="absolute inset-0"
+              style={{ backgroundImage: a.gradient }}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-6 flex flex-col gap-3">

@@ -1,13 +1,6 @@
 // Mismo criterio que components/pro/HomeProExtras.tsx: contenido de
 // muestra, sin conexión a sponsors reales, botones decorativos.
 
-const imgProduct1 =
-  "https://www.figma.com/api/mcp/asset/4f8d53d2-be97-46e2-89f3-9a200e008496";
-const imgProduct2 =
-  "https://www.figma.com/api/mcp/asset/8bcb21bf-8452-408c-8429-9b7a602a5d25";
-const imgFeaturedPerk =
-  "https://www.figma.com/api/mcp/asset/b896455e-f311-43d8-af76-c8d927aa8766";
-
 function ProBadge() {
   return (
     <span className="bg-[#ff906d]/10 text-[#ff906d] text-[9px] font-black uppercase tracking-[1px] px-2 py-1 rounded-full border border-[#ff906d]/20">
@@ -42,8 +35,16 @@ export function AiGoalNudge() {
 
 export function RecommendedForYou() {
   const products = [
-    { name: "Bálsamo de Recuperación Pro", cost: "1.800 KP", image: imgProduct1 },
-    { name: "Shaker de Rendimiento Steel", cost: "2.500 KP", image: imgProduct2 },
+    {
+      name: "Bálsamo de Recuperación Pro",
+      cost: "1.800 KP",
+      gradient: "linear-gradient(135deg, #ff784d 0%, #1f1f22 80%)",
+    },
+    {
+      name: "Shaker de Rendimiento Steel",
+      cost: "2.500 KP",
+      gradient: "linear-gradient(135deg, #ff66b6 0%, #1f1f22 80%)",
+    },
   ];
   return (
     <section className="flex flex-col gap-4">
@@ -62,7 +63,10 @@ export function RecommendedForYou() {
             key={p.name}
             className="bg-[#131315] rounded-2xl overflow-hidden w-64 shrink-0"
           >
-            <img src={p.image} alt="" className="h-32 w-full object-cover" />
+            <div
+              className="h-32 w-full"
+              style={{ backgroundImage: p.gradient }}
+            />
             <div className="p-4 flex flex-col gap-2">
               <p className="text-[#f9f5f8] font-bold text-sm">{p.name}</p>
               <p className="text-[#ff784d] font-black text-xs">{p.cost}</p>
@@ -92,10 +96,12 @@ export function FeaturedPerks() {
         <ProBadge />
       </div>
       <div className="relative rounded-3xl overflow-hidden h-64">
-        <img
-          src={imgFeaturedPerk}
-          alt=""
-          className="absolute inset-0 size-full object-cover"
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              "linear-gradient(160deg, #ff784d 0%, #b60077 55%, #131315 100%)",
+          }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
         <div className="absolute top-4 left-4 flex gap-2">

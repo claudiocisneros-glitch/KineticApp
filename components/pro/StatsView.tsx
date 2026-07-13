@@ -6,7 +6,7 @@
 // calcula de check-ins reales, siempre condicionado a que el usuario esté
 // dentro de la cobertura GPS del gym.
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import imgDeadlift from "../../imgs/Img2.png";
 
 function CircularProgress({
@@ -20,26 +20,40 @@ function CircularProgress({
   stroke?: number;
   label?: string;
 }) {
+  // Cada instancia necesita su propio id de gradiente — dos <linearGradient>
+  // con el mismo id en el DOM es inválido y en Chrome de Android puede
+  // corromper el render de las demás instancias (esto causaba el glitch
+  // tipo "estática" reportado en mobile).
+  const gradId = `gradStats-${useId()}`;
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const offset = c - (percent / 100) * c;
   return (
     <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} stroke="#262528" strokeWidth={stroke} fill="none" />
+      <svg width={size} height={size}>
         <circle
           cx={size / 2}
           cy={size / 2}
           r={r}
-          stroke="url(#gradStats)"
+          stroke="#262528"
+          strokeWidth={stroke}
+          fill="none"
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          stroke={`url(#${gradId})`}
           strokeWidth={stroke}
           fill="none"
           strokeDasharray={c}
           strokeDashoffset={offset}
           strokeLinecap="round"
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
         />
         <defs>
-          <linearGradient id="gradStats" x1="0%" y1="0%" x2="100%" y2="100%">
+          <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="rgb(255,120,77)" />
             <stop offset="100%" stopColor="rgb(255,102,182)" />
           </linearGradient>

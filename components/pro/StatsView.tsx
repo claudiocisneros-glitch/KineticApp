@@ -9,10 +9,11 @@
 import { useState } from "react";
 import imgDeadlift from "../../imgs/Img2.png";
 
-// Sin gradiente ni rotate — versión simplificada a propósito. La que usaba
-// <linearGradient> + rotate(-90) por instancia rompía el render en Chrome
-// de Android (efecto "estática" reportado en mobile), y no vale la pena
-// perseguir la causa exacta para un anillo decorativo.
+// Sin SVG — los 4 anillos usaban <svg>/<circle> con stroke-dasharray y
+// eran lo único exclusivo de esta pantalla (no está en Home/Classes/
+// Rewards, que no glitchean). En Chrome de Android causaban ghosting de
+// capas durante el scroll ("objetos encimados"). conic-gradient logra el
+// mismo anillo parcial sin SVG — es solo dos círculos CSS superpuestos.
 function CircularProgress({
   percent,
   size = 64,
@@ -24,27 +25,21 @@ function CircularProgress({
   stroke?: number;
   label?: string;
 }) {
-  const r = (size - stroke) / 2;
-  const c = 2 * Math.PI * r;
-  const offset = c - (percent / 100) * c;
   return (
-    <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
-      <svg width={size} height={size}>
-        <circle cx={size / 2} cy={size / 2} r={r} stroke="#262528" strokeWidth={stroke} fill="none" />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          stroke="#ff906d"
-          strokeWidth={stroke}
-          fill="none"
-          strokeDasharray={c}
-          strokeDashoffset={offset}
-          strokeLinecap="round"
-        />
-      </svg>
+    <div
+      className="relative flex items-center justify-center rounded-full"
+      style={{
+        width: size,
+        height: size,
+        background: `conic-gradient(#ff906d ${percent}%, #262528 0)`,
+      }}
+    >
+      <div
+        className="absolute rounded-full bg-[#131315]"
+        style={{ inset: stroke }}
+      />
       {label && (
-        <span className="absolute text-[#f9f5f8] font-black text-xs">
+        <span className="relative text-[#f9f5f8] font-black text-xs">
           {label}
         </span>
       )}

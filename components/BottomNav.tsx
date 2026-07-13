@@ -127,7 +127,7 @@ export default function BottomNav({ showPro = false }: { showPro?: boolean }) {
   if (!showPro) {
     return (
       <nav
-        className="backdrop-blur-[12px] bg-[rgba(14,14,16,0.95)] border-t border-[rgba(72,71,74,0.1)] fixed bottom-0 left-0 right-0 z-50 grid grid-cols-3 items-center pt-[14px] px-6 w-full max-w-[390px] mx-auto"
+        className="bg-[#0e0e10] border-t border-[rgba(72,71,74,0.1)] fixed bottom-0 left-0 right-0 z-50 grid grid-cols-3 items-center pt-[14px] px-6 w-full max-w-[390px] mx-auto"
         style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
       >
         <Link href="/" className={`${linkClass(pathname === "/")} justify-self-start`}>
@@ -148,7 +148,7 @@ export default function BottomNav({ showPro = false }: { showPro?: boolean }) {
 
   return (
     <nav
-      className="backdrop-blur-[12px] bg-[rgba(14,14,16,0.95)] border-t border-[rgba(72,71,74,0.1)] fixed bottom-0 left-0 right-0 z-50 grid grid-cols-5 items-center pt-[14px] px-3 w-full max-w-[390px] mx-auto"
+      className="bg-[#0e0e10] border-t border-[rgba(72,71,74,0.1)] fixed bottom-0 left-0 right-0 z-50 grid grid-cols-5 items-center pt-[14px] px-3 w-full max-w-[390px] mx-auto"
       style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
     >
       <Link href="/" className={`${linkClass(pathname === "/")} justify-self-start`}>

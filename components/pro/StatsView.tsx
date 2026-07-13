@@ -6,9 +6,13 @@
 // calcula de check-ins reales, siempre condicionado a que el usuario esté
 // dentro de la cobertura GPS del gym.
 
-import { useId, useState } from "react";
+import { useState } from "react";
 import imgDeadlift from "../../imgs/Img2.png";
 
+// Sin gradiente ni rotate — versión simplificada a propósito. La que usaba
+// <linearGradient> + rotate(-90) por instancia rompía el render en Chrome
+// de Android (efecto "estática" reportado en mobile), y no vale la pena
+// perseguir la causa exacta para un anillo decorativo.
 function CircularProgress({
   percent,
   size = 64,
@@ -20,44 +24,24 @@ function CircularProgress({
   stroke?: number;
   label?: string;
 }) {
-  // Cada instancia necesita su propio id de gradiente — dos <linearGradient>
-  // con el mismo id en el DOM es inválido y en Chrome de Android puede
-  // corromper el render de las demás instancias (esto causaba el glitch
-  // tipo "estática" reportado en mobile).
-  const gradId = `gradStats-${useId()}`;
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const offset = c - (percent / 100) * c;
   return (
     <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
       <svg width={size} height={size}>
+        <circle cx={size / 2} cy={size / 2} r={r} stroke="#262528" strokeWidth={stroke} fill="none" />
         <circle
           cx={size / 2}
           cy={size / 2}
           r={r}
-          stroke="#262528"
-          strokeWidth={stroke}
-          fill="none"
-          transform={`rotate(-90 ${size / 2} ${size / 2})`}
-        />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          stroke={`url(#${gradId})`}
+          stroke="#ff906d"
           strokeWidth={stroke}
           fill="none"
           strokeDasharray={c}
           strokeDashoffset={offset}
           strokeLinecap="round"
-          transform={`rotate(-90 ${size / 2} ${size / 2})`}
         />
-        <defs>
-          <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="rgb(255,120,77)" />
-            <stop offset="100%" stopColor="rgb(255,102,182)" />
-          </linearGradient>
-        </defs>
       </svg>
       {label && (
         <span className="absolute text-[#f9f5f8] font-black text-xs">
@@ -154,7 +138,7 @@ export default function StatsView() {
             <p className="text-[#adaaad] text-[10px] font-black uppercase tracking-[2px]">
               Momentum semanal
             </p>
-            <p className="font-black text-[32px] tracking-[-1px] pt-1 bg-clip-text text-transparent" style={{ backgroundImage: "linear-gradient(135deg, rgb(255,120,77) 0%, rgb(255,102,182) 100%)" }}>
+            <p className="font-black text-[32px] tracking-[-1px] pt-1 text-[#ff906d]">
               +1.250 KP
             </p>
           </div>

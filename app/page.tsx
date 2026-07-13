@@ -5,6 +5,7 @@ import { isStaff } from "@/lib/auth/staff";
 import { getViewMode } from "@/lib/view-mode";
 import BottomNav from "@/components/BottomNav";
 import AvatarMenu from "@/components/AvatarMenu";
+import AvatarGlyph from "@/components/AvatarGlyph";
 import {
   AiSearchBar,
   KpiGrid,
@@ -39,7 +40,7 @@ export default async function HomePage() {
         .maybeSingle(),
       supabase
         .from("user_badges")
-        .select("badge_id, badges(name, description)")
+        .select("badge_id, badges(name, description, icon_url)")
         .eq("user_id", user!.id),
     ]);
 
@@ -54,7 +55,7 @@ export default async function HomePage() {
         <img src={imgLogoIcon} alt="Kinetic Gym" className="h-7 shrink-0" />
         <div className="flex items-center gap-3 shrink-0">
           <img src={imgBellIcon} alt="Notificaciones" className="size-9" />
-          {staff && <AvatarMenu currentMode={getViewMode()} />}
+          {staff ? <AvatarMenu currentMode={getViewMode()} /> : <AvatarGlyph />}
         </div>
       </header>
 
@@ -64,7 +65,7 @@ export default async function HomePage() {
       >
         {/* Bienvenida */}
         <div className="flex gap-3 items-center pt-2">
-          <div className="border border-[#ff66b6] rounded-full size-8 shrink-0" />
+          <AvatarGlyph />
           <h1 className="font-bold text-[22px] text-[#f9f5f8] tracking-[-0.4px]">
             Bienvenido, {profile?.full_name ?? "Socio Kinetic"}
           </h1>
@@ -130,19 +131,31 @@ export default async function HomePage() {
             </p>
           ) : (
             <div className="grid grid-cols-2 gap-3">
-              {(userBadges ?? []).map((ub: any) => (
-                <div
-                  key={ub.badge_id}
-                  className="bg-[#1f1f22] border border-[rgba(72,71,74,0.1)] rounded-2xl p-4"
-                >
-                  <p className="text-[#f9f5f8] font-bold text-sm">
-                    {ub.badges.name}
-                  </p>
-                  <p className="text-[#adaaad] text-xs mt-1">
-                    {ub.badges.description}
-                  </p>
-                </div>
-              ))}
+              {(userBadges ?? []).map((ub: any) => {
+                const iconUrl: string | null = ub.badges.icon_url;
+                return (
+                  <div
+                    key={ub.badge_id}
+                    className="bg-[#1f1f22] border border-[rgba(72,71,74,0.1)] rounded-2xl p-4 flex flex-col gap-3"
+                  >
+                    {iconUrl ? (
+                      <img src={iconUrl} alt="" className="size-12" />
+                    ) : (
+                      <div className="size-12 rounded-full bg-[#ff906d]/10 flex items-center justify-center text-[#ff906d] font-black">
+                        ★
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-[#f9f5f8] font-bold text-sm">
+                        {ub.badges.name}
+                      </p>
+                      <p className="text-[#adaaad] text-xs mt-1">
+                        {ub.badges.description}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </section>
@@ -182,7 +195,7 @@ export default async function HomePage() {
         {showPro && <SponsorsStrip />}
       </main>
 
-      <BottomNav />
+      <BottomNav showPro={showPro} />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { getViewMode } from "@/lib/view-mode";
 import RedeemButton from "@/components/RedeemButton";
 import BottomNav from "@/components/BottomNav";
 import AvatarMenu from "@/components/AvatarMenu";
+import AvatarGlyph from "@/components/AvatarGlyph";
 import {
   AiGoalNudge,
   RecommendedForYou,
@@ -80,11 +81,7 @@ export default async function RewardsPage() {
           </h1>
         </div>
         <div className="flex items-center gap-3 shrink-0">
-          {staff ? (
-            <AvatarMenu currentMode={getViewMode()} />
-          ) : (
-            <div className="border border-[#ff66b6] rounded-full size-8" />
-          )}
+          {staff ? <AvatarMenu currentMode={getViewMode()} /> : <AvatarGlyph />}
         </div>
       </header>
 
@@ -253,7 +250,7 @@ export default async function RewardsPage() {
         {showPro && <SponsorsStrip />}
       </main>
 
-      <BottomNav />
+      <BottomNav showPro={showPro} />
     </div>
   );
 }

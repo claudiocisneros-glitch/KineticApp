@@ -1,0 +1,26 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff7846"/>
+      <stop offset="100%" stop-color="#ff5fa6"/>
+    </linearGradient>
+  </defs>
+  <polygon points="100,8 176,52 176,148 100,192 24,148 24,52" fill="#1B1B2F"/>
+  <polygon points="100,17 168,56 168,144 100,183 32,144 32,56" fill="url(#g2)"/>
+  <polygon points="100,26 160,61 160,139 100,174 40,139 40,61" fill="#F3ECDD"/>
+
+  <path
+    d="M100 45 L142 62 L142 108 C142 142 122 163 100 175 C78 163 58 142 58 108 L58 62 Z"
+    fill="url(#g2)"
+    stroke="#1B1B2F"
+    stroke-width="3.5"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M100 78c9 10 13 21 13 30 0 10-5 18-13 24-8-6-13-14-13-24 0-4 1-8 3-11 1 4 4 6 6 4-2-8-1-15 4-23Z"
+    fill="#F3ECDD"
+    stroke="#1B1B2F"
+    stroke-width="2.5"
+    stroke-linejoin="round"
+  />
+</svg>

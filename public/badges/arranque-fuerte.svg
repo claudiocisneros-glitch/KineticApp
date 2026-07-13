@@ -1,0 +1,28 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff7846"/>
+      <stop offset="100%" stop-color="#ff5fa6"/>
+    </linearGradient>
+  </defs>
+  <polygon points="100,8 176,52 176,148 100,192 24,148 24,52" fill="#1B1B2F"/>
+  <polygon points="100,17 168,56 168,144 100,183 32,144 32,56" fill="url(#g1)"/>
+  <polygon points="100,26 160,61 160,139 100,174 40,139 40,61" fill="#F3ECDD"/>
+
+  <g stroke="#1B1B2F" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M100 52c15 11 22 30 22 47 0 13-7 25-22 34-15-9-22-21-22-34 0-17 7-36 22-47Z" fill="url(#g1)"/>
+    <circle cx="100" cy="87" r="7.5" fill="#F3ECDD"/>
+    <path d="M78 112c-11 3-17 12-19 25l16-7Z" fill="url(#g1)"/>
+    <path d="M122 112c11 3 17 12 19 25l-16-7Z" fill="url(#g1)"/>
+    <path d="M90 130c0 9 4 16 10 20 6-4 10-11 10-20" fill="#ff5fa6"/>
+  </g>
+  <g stroke="#1B1B2F" stroke-width="2.2" stroke-linecap="round">
+    <path d="M58 118l-13 7M52 131l-12 4M66 106l-14 3"/>
+    <path d="M142 118l13 7M148 131l12 4M134 106l14 3"/>
+  </g>
+  <g stroke="#1B1B2F" stroke-width="2.2" stroke-linecap="round" fill="none">
+    <path d="M60 148c-4 4-6 9-6 15"/>
+    <path d="M70 156c-3 3-4 7-4 11"/>
+    <path d="M50 140c-5 3-8 7-9 13"/>
+  </g>
+</svg>

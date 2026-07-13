@@ -1,0 +1,29 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g4" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff7846"/>
+      <stop offset="100%" stop-color="#ff5fa6"/>
+    </linearGradient>
+  </defs>
+  <polygon points="100,8 176,52 176,148 100,192 24,148 24,52" fill="#1B1B2F"/>
+  <polygon points="100,17 168,56 168,144 100,183 32,144 32,56" fill="url(#g4)"/>
+  <polygon points="100,26 160,61 160,139 100,174 40,139 40,61" fill="#F3ECDD"/>
+
+  <circle cx="100" cy="95" r="30" fill="none" stroke="#1B1B2F" stroke-width="3" />
+  <polygon
+    points="100,76 106,90 121,91 109,101 113,116 100,107 87,116 91,101 79,91 94,90"
+    fill="url(#g4)"
+    stroke="#1B1B2F"
+    stroke-width="2.5"
+    stroke-linejoin="round"
+  />
+
+  <g fill="url(#g4)" stroke="#1B1B2F" stroke-width="1.6" stroke-linejoin="round">
+    <ellipse cx="52" cy="108" rx="7" ry="12" transform="rotate(-35 52 108)" />
+    <ellipse cx="46" cy="124" rx="7" ry="12" transform="rotate(-15 46 124)" />
+    <ellipse cx="48" cy="141" rx="7" ry="12" transform="rotate(15 48 141)" />
+    <ellipse cx="148" cy="108" rx="7" ry="12" transform="rotate(35 148 108)" />
+    <ellipse cx="154" cy="124" rx="7" ry="12" transform="rotate(15 154 124)" />
+    <ellipse cx="152" cy="141" rx="7" ry="12" transform="rotate(-15 152 141)" />
+  </g>
+</svg>

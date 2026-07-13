@@ -6,14 +6,6 @@ import imgAbWorkout from "../../imgs/Img3.png";
 import imgDeadlift from "../../imgs/Img2.png";
 import imgCombo from "../../imgs/Gemini_Generated_Image_vba6l5vba6l5vba6.png";
 
-function ProBadge() {
-  return (
-    <span className="bg-[#ff906d]/10 text-[#ff906d] text-[9px] font-black uppercase tracking-[1px] px-2 py-1 rounded-full border border-[#ff906d]/20">
-      Vista de muestra
-    </span>
-  );
-}
-
 export function AiGoalNudge() {
   return (
     <div className="bg-[#1f1f22] border border-[rgba(72,71,74,0.1)] rounded-2xl p-5 flex gap-4 items-center">
@@ -33,7 +25,6 @@ export function AiGoalNudge() {
           </span>
         </div>
       </div>
-      <ProBadge />
     </div>
   );
 }
@@ -60,7 +51,6 @@ export function RecommendedForYou() {
           </h2>
           <p className="text-[#adaaad] text-xs">Basado en tus entrenamientos</p>
         </div>
-        <ProBadge />
       </div>
       <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
         {products.map((p) => (
@@ -101,7 +91,6 @@ export function FeaturedPerks() {
     <section className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h2 className="font-bold text-xl text-[#f9f5f8]">Beneficios destacados</h2>
-        <ProBadge />
       </div>
       <div className="relative rounded-3xl overflow-hidden h-64">
         <img

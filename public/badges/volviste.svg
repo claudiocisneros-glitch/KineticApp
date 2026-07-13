@@ -1,0 +1,26 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff7846"/>
+      <stop offset="100%" stop-color="#ff5fa6"/>
+    </linearGradient>
+  </defs>
+  <polygon points="100,8 176,52 176,148 100,192 24,148 24,52" fill="#1B1B2F"/>
+  <polygon points="100,17 168,56 168,144 100,183 32,144 32,56" fill="url(#g3)"/>
+  <polygon points="100,26 160,61 160,139 100,174 40,139 40,61" fill="#F3ECDD"/>
+
+  <g fill="none" stroke="url(#g3)" stroke-width="7" stroke-linecap="round">
+    <path d="M65 78a37 37 0 0 1 62-16" />
+    <path d="M135 122a37 37 0 0 1-62 16" />
+  </g>
+  <g fill="url(#g3)" stroke="#1B1B2F" stroke-width="1.5" stroke-linejoin="round">
+    <polygon points="127,55 140,60 132,71" />
+    <polygon points="73,145 60,140 68,129" />
+  </g>
+
+  <g stroke="#1B1B2F" stroke-width="3" stroke-linecap="round">
+    <rect x="79" y="96" width="42" height="8" rx="2" fill="url(#g3)" />
+    <rect x="70" y="90" width="10" height="20" rx="3" fill="#1B1B2F" />
+    <rect x="120" y="90" width="10" height="20" rx="3" fill="#1B1B2F" />
+  </g>
+</svg>

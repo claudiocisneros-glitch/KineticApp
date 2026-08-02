@@ -1,14 +1,14 @@
 name: Keep Supabase alive
 
-# Supabase pausa proyectos free sin actividad de base de datos durante 7
-# días seguidos. Este workflow le pega a una tabla de lectura pública
-# (badges, que tiene RLS "Anyone can view badges") cada 3 días — con
-# margen de sobra para que nunca llegue a los 7 días de inactividad,
-# incluso si algún run se demora o falla.
+# Supabase pausa proyectos free sin actividad "suficiente" de base de datos
+# durante 7 días seguidos. Según la doc oficial, esperan más o menos unas
+# pocas requests por día en la última semana, no solo un ping cada tanto.
+# Este workflow le pega a una tabla de lectura pública (badges, que tiene
+# RLS "Anyone can view badges") todos los días para asegurar esa cadencia.
 
 on:
   schedule:
-    - cron: "0 9 */3 * *" # cada 3 días, 9:00 UTC
+    - cron: "0 9 * * *" # todos los días, 9:00 UTC
   workflow_dispatch: # permite correrlo a mano desde la pestaña Actions
 
 jobs:

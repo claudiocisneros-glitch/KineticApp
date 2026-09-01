@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStaffRole } from "@/lib/auth/staff";
 import AdjustPointsForm from "@/components/admin/AdjustPointsForm";
+import EditNameForm from "@/components/admin/EditNameForm";
 
 const REASON_LABELS: Record<string, string> = {
   checkin: "Check-in",
@@ -89,6 +90,9 @@ export default async function AdminUserDetailPage({
           {profile.full_name ?? "Sin nombre"}
         </h1>
         <p className="text-[#adaaad] text-sm mt-1">{email}</p>
+        {role === "owner" && (
+          <EditNameForm userId={params.id} initialName={profile.full_name ?? ""} />
+        )}
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

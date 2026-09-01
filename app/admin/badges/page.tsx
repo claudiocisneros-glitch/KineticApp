@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isOwner } from "@/lib/auth/staff";
 import AwardBadgeForm from "@/components/admin/AwardBadgeForm";
+import BadgesManager from "@/components/admin/BadgesManager";
 
 export default async function AdminBadgesPage() {
   const supabase = createClient();
@@ -37,6 +38,8 @@ export default async function AdminBadgesPage() {
     <div className="pt-2 flex flex-col gap-6">
       <h1 className="text-2xl text-[#f9f5f8] font-black">Badges</h1>
 
+      <BadgesManager badges={badges ?? []} />
+
       <section className="bg-[#1f1f22] border border-[rgba(72,71,74,0.1)] rounded-2xl p-5">
         <h2 className="text-[#f9f5f8] font-bold text-sm mb-3">
           Otorgar badge manualmente
@@ -46,6 +49,10 @@ export default async function AdminBadgesPage() {
           badges={(badges ?? []).map((b: any) => ({ id: b.id, name: b.name }))}
         />
       </section>
+
+      <h2 className="text-[#adaaad] text-sm font-black tracking-[3.2px] uppercase -mb-2">
+        Otorgados
+      </h2>
 
       <div className="flex flex-col gap-4">
         {(badges ?? []).map((b: any) => {

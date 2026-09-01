@@ -28,7 +28,7 @@ export default function FulfillButton({
       disabled={loading}
       className="bg-[#ff906d] text-black text-sm font-bold rounded-xl px-4 py-2"
     >
-      {loading ? "..." : "Entregado"}
+      {loading ? "Marcando..." : "Marcar entregado"}
     </button>
   );
 }

@@ -24,6 +24,24 @@ export async function POST() {
 
   const admin = createAdminClient();
 
+  // Un solo QR por día calendario. Chequeo server-side además del botón
+  // deshabilitado en el cliente — el cliente es solo UX, esto es lo que
+  // realmente lo impide.
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const { data: lastQrRows } = await admin
+    .from("gym_qr_codes")
+    .select("valid_from")
+    .order("valid_from", { ascending: false })
+    .limit(1);
+
+  const lastQr = lastQrRows?.[0] ?? null;
+  if (lastQr && lastQr.valid_from.slice(0, 10) === todayStr) {
+    return NextResponse.json(
+      { error: "Ya se generó un QR hoy. Se puede generar uno nuevo mañana." },
+      { status: 409 }
+    );
+  }
+
   // Vence cualquier código todavía vigente ANTES de crear el nuevo.
   // Si no hiciéramos esto, quedarían dos códigos válidos al mismo tiempo:
   // rompe tanto la lógica de "un solo QR activo" como (más importante)

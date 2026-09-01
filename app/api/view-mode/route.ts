@@ -11,7 +11,7 @@ export async function POST(req: Request) {
 
   // Solo staff puede cambiar el modo — no tiene sentido que un socio
   // común pueda activar la vista de showcase.
-  if (!user || !isStaff(user)) {
+  if (!user || !(await isStaff(user))) {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 

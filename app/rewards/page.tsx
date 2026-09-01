@@ -51,7 +51,7 @@ export default async function RewardsPage() {
     ]);
 
   const balance = balanceRow?.balance ?? 0;
-  const staff = isStaff(user);
+  const staff = await isStaff(user);
   const showPro = staff && getViewMode() === "pro";
 
   const redemptionCounts = (myRedemptions ?? []).reduce<Record<string, number>>(

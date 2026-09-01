@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { isStaff } from "@/lib/auth/staff";
+import { isOwner } from "@/lib/auth/staff";
 
+// Crear una recompensa nueva. Solo Dueño.
 export async function POST(req: Request) {
   const supabase = createClient();
   const {
@@ -12,18 +13,24 @@ export async function POST(req: Request) {
   if (!user) {
     return NextResponse.json({ error: "No autenticado" }, { status: 401 });
   }
-
-  if (!(await isStaff(user))) {
+  if (!(await isOwner(user))) {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 
-  const admin = createAdminClient();
-  const { redemptionId } = await req.json();
+  const { name, description, cost_points, max_redemptions_per_user } =
+    await req.json();
 
-  const { error } = await admin
-    .from("redemptions")
-    .update({ status: "fulfilled", fulfilled_at: new Date().toISOString() })
-    .eq("id", redemptionId);
+  if (!name || typeof cost_points !== "number" || cost_points < 0) {
+    return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
+  }
+
+  const admin = createAdminClient();
+  const { error } = await admin.from("rewards").insert({
+    name,
+    description: description ?? null,
+    cost_points,
+    max_redemptions_per_user: max_redemptions_per_user ?? null,
+  });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

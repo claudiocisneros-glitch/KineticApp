@@ -21,7 +21,7 @@ export default async function ClassesPage() {
 
   if (!user) redirect("/login");
 
-  const staff = isStaff(user);
+  const staff = await isStaff(user);
   const showPro = staff && getViewMode() === "pro";
 
   if (!showPro) redirect("/");

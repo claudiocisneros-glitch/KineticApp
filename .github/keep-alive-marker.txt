@@ -2,4 +2,4 @@ Este archivo existe solo para generar un commit periódico y evitar que
 GitHub desactive el workflow "Keep Supabase alive" por 60 días de
 inactividad del repo (no cuenta actividad, solo commits nuevos).
 
-Última actualización: 2026-07-27
+Última actualización: 2026-09-01

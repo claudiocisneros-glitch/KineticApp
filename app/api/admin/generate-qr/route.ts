@@ -18,7 +18,7 @@ export async function POST() {
     return NextResponse.json({ error: "No autenticado" }, { status: 401 });
   }
 
-  if (!isStaff(user)) {
+  if (!(await isStaff(user))) {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 

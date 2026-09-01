@@ -45,7 +45,7 @@ export default async function HomePage() {
     ]);
 
   const balance = balanceRow?.balance ?? 0;
-  const staff = isStaff(user);
+  const staff = await isStaff(user);
   const showPro = staff && getViewMode() === "pro";
 
   return (

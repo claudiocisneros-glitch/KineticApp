@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { isStaff } from "@/lib/auth/staff";
 import { getViewMode } from "@/lib/view-mode";
+import Link from "next/link";
 import RedeemButton from "@/components/RedeemButton";
 import BottomNav from "@/components/BottomNav";
 import AvatarMenu from "@/components/AvatarMenu";
@@ -145,7 +146,15 @@ export default async function RewardsPage() {
         style={{ paddingBottom: "calc(110px + env(safe-area-inset-bottom))" }}
       >
         <div className="flex flex-col gap-6">
-          <h2 className="font-bold text-xl text-[#f9f5f8]">Canjear puntos</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="font-bold text-xl text-[#f9f5f8]">Canjear puntos</h2>
+            <Link
+              href="/rewards/history"
+              className="text-[#ff906d] text-xs font-black uppercase tracking-[0.5px]"
+            >
+              Mis canjes →
+            </Link>
+          </div>
 
           <div className="grid grid-cols-2 gap-4">
             {(rewards ?? []).map((reward) => {

@@ -27,6 +27,7 @@ export default async function AdminRedemptionsPage() {
     pointsSpent: r.points_spent,
     status: r.status as "pending" | "fulfilled",
     createdAt: r.created_at,
+    code: r.code,
   }));
 
   return (

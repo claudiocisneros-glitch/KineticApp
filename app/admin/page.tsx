@@ -30,22 +30,24 @@ function rangeStart(range: Range): Date | null {
   return null; // "all" → sin piso de fecha
 }
 
-function StatCard({ label, value, badge }: { label: string; value: string | number; badge?: string }) {
+function StatCard({
+  label,
+  value,
+  sub,
+}: {
+  label: string;
+  value: string | number;
+  sub?: string;
+}) {
   return (
     <div className="bg-[#1f1f22] border border-[rgba(72,71,74,0.1)] rounded-2xl p-4 flex flex-col gap-1">
       <p className="text-[#adaaad] text-[10px] font-bold uppercase tracking-[1px]">
         {label}
       </p>
-      <div className="flex items-baseline gap-2">
-        <p className="text-[#f9f5f8] font-black text-2xl tracking-[-0.5px]">
-          {value}
-        </p>
-        {badge && (
-          <span className="text-[#ff906d] text-[10px] font-black uppercase">
-            {badge}
-          </span>
-        )}
-      </div>
+      <p className="text-[#f9f5f8] font-black text-2xl tracking-[-0.5px]">
+        {value}
+      </p>
+      {sub && <p className="text-[#adaaad]/70 text-[10px] font-bold">{sub}</p>}
     </div>
   );
 }
@@ -113,6 +115,9 @@ export default async function AdminHomePage({
                 <p className="text-[#adaaad] text-xs">
                   {r.profiles.full_name} · {r.points_spent} KP
                 </p>
+                <p className="text-[#f9f5f8] font-black text-xs tracking-[1.5px] mt-1">
+                  {r.code}
+                </p>
               </div>
               <FulfillButton redemptionId={r.id} />
             </div>
@@ -144,15 +149,21 @@ export default async function AdminHomePage({
     .from("user_badges")
     .select("*", { count: "exact", head: true });
 
+  let newMembersQuery = admin
+    .from("profiles")
+    .select("*", { count: "exact", head: true })
+    .is("role", null);
+
   if (start) {
     checkinsQuery = checkinsQuery.gte("checkin_date", start.toISOString().slice(0, 10));
     ledgerQuery = ledgerQuery.gte("created_at", start.toISOString());
     badgesQuery = badgesQuery.gte("earned_at", start.toISOString());
+    newMembersQuery = newMembersQuery.gte("member_since", start.toISOString().slice(0, 10));
   }
 
   const [
     { count: totalMembers },
-    { count: newMembersToday },
+    { count: newMembersInRange },
     { count: checkinsInRange },
     { count: badgesInRange },
     { data: ledgerRows },
@@ -161,11 +172,7 @@ export default async function AdminHomePage({
       .from("profiles")
       .select("*", { count: "exact", head: true })
       .is("role", null),
-    admin
-      .from("profiles")
-      .select("*", { count: "exact", head: true })
-      .is("role", null)
-      .eq("member_since", todayStr),
+    newMembersQuery,
     checkinsQuery,
     badgesQuery,
     ledgerQuery,
@@ -208,9 +215,13 @@ export default async function AdminHomePage({
 
         <div className="grid grid-cols-2 gap-3">
           <StatCard
-            label="Socios"
-            value={totalMembers ?? 0}
-            badge={newMembersToday ? `+${newMembersToday} hoy` : undefined}
+            label={
+              range === "all"
+                ? "Socios"
+                : `Socios nuevos (${RANGE_LABELS[range].toLowerCase()})`
+            }
+            value={range === "all" ? totalMembers ?? 0 : newMembersInRange ?? 0}
+            sub={range === "all" ? undefined : `${(totalMembers ?? 0).toLocaleString()} en total`}
           />
           <StatCard
             label={`Check-ins (${RANGE_LABELS[range].toLowerCase()})`}
@@ -263,6 +274,9 @@ export default async function AdminHomePage({
                 <p className="text-[#f9f5f8] font-semibold">{r.rewards.name}</p>
                 <p className="text-[#adaaad] text-xs">
                   {r.profiles.full_name} · {r.points_spent} KP
+                </p>
+                <p className="text-[#f9f5f8] font-black text-xs tracking-[1.5px] mt-1">
+                  {r.code}
                 </p>
               </div>
               <FulfillButton redemptionId={r.id} />

@@ -10,6 +10,7 @@ type Redemption = {
   pointsSpent: number;
   status: "pending" | "fulfilled";
   createdAt: string;
+  code: string;
 };
 
 export default function RedemptionsTable({
@@ -23,9 +24,14 @@ export default function RedemptionsTable({
   );
 
   const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
     return redemptions.filter((r) => {
       if (statusFilter !== "all" && r.status !== statusFilter) return false;
-      if (query && !r.memberName.toLowerCase().includes(query.toLowerCase()))
+      if (
+        q &&
+        !r.memberName.toLowerCase().includes(q) &&
+        !r.code.toLowerCase().includes(q)
+      )
         return false;
       return true;
     });
@@ -37,7 +43,7 @@ export default function RedemptionsTable({
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Buscar por socio..."
+          placeholder="Buscar por socio o código..."
           className="bg-[#1f1f22] border border-[rgba(72,71,74,0.2)] rounded-xl px-4 py-2.5 text-sm text-[#f9f5f8] placeholder:text-[#adaaad] flex-1"
         />
         <div className="flex gap-2 shrink-0">
@@ -78,6 +84,9 @@ export default function RedemptionsTable({
               <p className="text-[#adaaad] text-xs mt-1">
                 {r.memberName} · {r.pointsSpent} KP ·{" "}
                 {new Date(r.createdAt).toLocaleDateString("es-AR")}
+              </p>
+              <p className="text-[#f9f5f8] font-black text-xs tracking-[1.5px] mt-1">
+                {r.code}
               </p>
             </div>
             {r.status === "pending" ? (

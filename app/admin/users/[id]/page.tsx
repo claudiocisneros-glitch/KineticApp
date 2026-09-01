@@ -181,6 +181,9 @@ export default async function AdminUserDetailPage({
                     {new Date(r.created_at).toLocaleDateString("es-AR")} ·{" "}
                     {r.points_spent} KP
                   </p>
+                  <p className="text-[#f9f5f8] font-black text-[11px] tracking-[1.5px] mt-1">
+                    {r.code}
+                  </p>
                 </div>
                 <span
                   className={`text-[10px] font-black uppercase px-2 py-1 rounded-full ${

@@ -18,7 +18,7 @@ const NAV_ITEMS: { href: string; label: string; roles: StaffRole[] }[] = [
     roles: ["owner", "reception"],
   },
   { href: "/admin/rewards", label: "Recompensas", roles: ["owner"] },
-  { href: "/admin/badges", label: "Badges", roles: ["owner"] },
+  { href: "/admin/badges", label: "Badges", roles: ["owner", "reception"] },
   { href: "/admin/staff", label: "Staff", roles: ["owner"] },
 ];
 

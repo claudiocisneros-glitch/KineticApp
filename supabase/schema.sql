@@ -88,6 +88,9 @@ create table redemptions (
   reward_id uuid not null references rewards(id),
   points_spent int not null,
   status text not null default 'pending', -- 'pending' | 'fulfilled'
+  -- Código corto de comprobante: el socio lo muestra en recepción y el
+  -- staff lo busca en el panel para marcar el canje como entregado.
+  code text not null unique,
   created_at timestamptz not null default now(),
   fulfilled_at timestamptz
 );
@@ -117,13 +120,15 @@ insert into badges (code, name, description) values
 -- porque el lock de fila serializa los canjes del mismo usuario)
 -- ============================================================
 create or replace function public.redeem_reward(p_user_id uuid, p_reward_id uuid)
-returns table(redemption_id uuid, points_spent int) as $$
+returns table(redemption_id uuid, points_spent int, redemption_code text) as $$
 declare
   v_cost int;
   v_max_redemptions int;
   v_already_redeemed int;
   v_balance int;
   v_redemption_id uuid;
+  v_code text;
+  v_attempts int := 0;
 begin
   -- Lockea la fila del usuario: si llegan dos canjes casi simultáneos,
   -- el segundo espera a que el primero termine antes de leer el balance.
@@ -155,14 +160,25 @@ begin
     raise exception 'Puntos insuficientes';
   end if;
 
-  insert into redemptions (user_id, reward_id, points_spent, status)
-  values (p_user_id, p_reward_id, v_cost, 'pending')
-  returning id into v_redemption_id;
+  loop
+    v_code := upper(substring(replace(gen_random_uuid()::text, '-', '') from 1 for 8));
+    begin
+      insert into redemptions (user_id, reward_id, points_spent, status, code)
+      values (p_user_id, p_reward_id, v_cost, 'pending', v_code)
+      returning id into v_redemption_id;
+      exit;
+    exception when unique_violation then
+      v_attempts := v_attempts + 1;
+      if v_attempts > 5 then
+        raise exception 'No se pudo generar un código de canje único';
+      end if;
+    end;
+  end loop;
 
   insert into points_ledger (user_id, amount, reason, reference_id)
   values (p_user_id, -v_cost, 'redemption', v_redemption_id);
 
-  return query select v_redemption_id, v_cost;
+  return query select v_redemption_id, v_cost, v_code;
 end;
 $$ language plpgsql security definer set search_path = public;
 

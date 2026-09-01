@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 export default function RedeemButton({
@@ -16,7 +17,7 @@ export default function RedeemButton({
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [justRedeemed, setJustRedeemed] = useState(false);
+  const [redeemedCode, setRedeemedCode] = useState<string | null>(null);
 
   async function handleRedeem() {
     setLoading(true);
@@ -28,16 +29,16 @@ export default function RedeemButton({
     setLoading(false);
 
     if (res.ok) {
-      setJustRedeemed(true);
+      const data = await res.json();
+      setRedeemedCode(data.redemption?.redemption_code ?? null);
       router.refresh();
-      setTimeout(() => setJustRedeemed(false), 2500);
     } else {
       const data = await res.json();
       alert(data.error ?? "No se pudo canjear");
     }
   }
 
-  if (alreadyRedeemed) {
+  if (alreadyRedeemed && !redeemedCode) {
     return (
       <button
         disabled
@@ -48,14 +49,20 @@ export default function RedeemButton({
     );
   }
 
-  if (justRedeemed) {
+  if (redeemedCode) {
     return (
-      <button
-        disabled
-        className="bg-green-600 text-white text-xs font-bold rounded-xl py-2.5 w-full"
-      >
-        ¡Canjeado! ✓
-      </button>
+      <div className="bg-green-600/10 border border-green-600/30 rounded-xl p-2.5 flex flex-col items-center gap-1 w-full">
+        <p className="text-green-500 text-[10px] font-bold uppercase tracking-[0.5px]">
+          ¡Canjeado! Mostrá este código
+        </p>
+        <p className="text-white font-black text-lg tracking-[2px]">{redeemedCode}</p>
+        <Link
+          href="/rewards/history"
+          className="text-[#ff906d] text-[10px] font-bold underline"
+        >
+          Ver mis canjes
+        </Link>
+      </div>
     );
   }
 

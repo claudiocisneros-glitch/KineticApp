@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { isOwner } from "@/lib/auth/staff";
+import { isStaff } from "@/lib/auth/staff";
 
-// Otorgar un badge manualmente. Solo Dueño. ignoreDuplicates evita error
-// si el socio ya lo tenía (unique constraint en user_badges).
+// Otorgar un badge manualmente. Dueño y Recepción — es tarea del día a
+// día del piso del gimnasio, el dueño no siempre está presente.
+// El catálogo de badges (crear/editar) sigue siendo solo Dueño, ver
+// /api/admin/badges. ignoreDuplicates evita error si el socio ya lo
+// tenía (unique constraint en user_badges).
 export async function POST(req: Request) {
   const supabase = createClient();
   const {
@@ -14,7 +17,7 @@ export async function POST(req: Request) {
   if (!user) {
     return NextResponse.json({ error: "No autenticado" }, { status: 401 });
   }
-  if (!(await isOwner(user))) {
+  if (!(await isStaff(user))) {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 

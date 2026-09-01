@@ -38,6 +38,12 @@ end $$;
 -- Reintenta la generación si por azar choca con uno existente (8
 -- caracteres alfanuméricos alcanzan de sobra para un gimnasio piloto,
 -- pero el loop no cuesta nada y evita que un canje falle por eso).
+--
+-- Postgres no permite cambiar el tipo de retorno de una función con
+-- CREATE OR REPLACE (la firma vieja devolvía 2 columnas, la nueva
+-- devuelve 3) — hay que borrarla primero.
+drop function if exists public.redeem_reward(uuid, uuid);
+
 create or replace function public.redeem_reward(p_user_id uuid, p_reward_id uuid)
 returns table(redemption_id uuid, points_spent int, redemption_code text) as $$
 declare

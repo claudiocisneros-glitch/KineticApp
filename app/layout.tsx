@@ -2,6 +2,12 @@ import type { Metadata, Viewport } from "next";
 import { Montserrat, Inter } from "next/font/google";
 import "./globals.css";
 
+// Toda la app es privada y trabaja con datos en vivo (auth, puntos, check-ins),
+// así que no hay nada que pre-renderizar como estático. Forzar renderizado
+// dinámico evita que el build intente prerenderizar páginas que crean el
+// cliente de Supabase (p. ej. /login) y falle en ese paso.
+export const dynamic = "force-dynamic";
+
 const montserrat = Montserrat({
   subsets: ["latin"],
   weight: ["700", "800"],

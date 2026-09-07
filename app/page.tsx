@@ -3,9 +3,11 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { isStaff } from "@/lib/auth/staff";
 import { getViewMode } from "@/lib/view-mode";
+import { buildReto60Status, RETO60 } from "@/lib/reto60";
 import BottomNav from "@/components/BottomNav";
 import AvatarMenu from "@/components/AvatarMenu";
 import AvatarGlyph from "@/components/AvatarGlyph";
+import Reto60Card from "@/components/Reto60Card";
 import {
   AiSearchBar,
   KpiGrid,
@@ -47,6 +49,36 @@ export default async function HomePage() {
   const balance = balanceRow?.balance ?? 0;
   const staff = await isStaff(user);
   const showPro = staff && getViewMode() === "pro";
+
+  // ---- Estado del Reto 60 (derivado de checkins + primer check-in) ----
+  const { data: firstCheckin } = await supabase
+    .from("checkins")
+    .select("checkin_date")
+    .eq("user_id", user!.id)
+    .order("checkin_date", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  let reto60Status = buildReto60Status(null, 0);
+  if (firstCheckin) {
+    const firstMs = new Date(firstCheckin.checkin_date + "T00:00").getTime();
+    const windowEndStr = new Date(firstMs + RETO60.windowDays * 86400000)
+      .toISOString()
+      .slice(0, 10);
+    const { count } = await supabase
+      .from("checkins")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", user!.id)
+      .gte("checkin_date", firstCheckin.checkin_date)
+      .lt("checkin_date", windowEndStr);
+    reto60Status = buildReto60Status(new Date(firstMs), count ?? 0);
+  }
+
+  const { data: prize } = await supabase
+    .from("rewards")
+    .select("name")
+    .eq("reward_trigger", "reto_60")
+    .maybeSingle();
 
   return (
     <div className="bg-[#0e0e10] min-h-screen">
@@ -97,16 +129,13 @@ export default async function HomePage() {
           </div>
         </section>
 
+        {/* Reto 60 — objetivo de continuidad */}
+        <Reto60Card status={reto60Status} prizeName={prize?.name ?? null} />
+
         {showPro && <KpiGrid />}
         {showPro && <PromotionsCarousel />}
 
-        {/* Racha actual — versión simplificada del "Weekly Activity Streak"
-            de Figma (ver WeeklyActivityChart en Pro para la versión completa
-            con datos de muestra). El original es un gráfico de barras de
-            asistencia por día de la semana con datos que hoy no tenemos
-            (requeriría trackear check-ins por día, no solo el contador
-            semanal). Se deja marcado para sumar cuando resolvamos el
-            cálculo real de racha (primer pendiente del roadmap). */}
+        {/* Racha actual */}
         {!showPro && (
           <section className="bg-[#131315] border border-[rgba(72,71,74,0.1)] rounded-2xl p-[25px] flex items-center justify-between">
             <p className="text-[#f9f5f8] text-sm font-black tracking-[3.2px] uppercase">
@@ -163,9 +192,7 @@ export default async function HomePage() {
         {showPro && <UpcomingActivities />}
 
         {/* Boost your points — diseño exacto de Figma, apunta al check-in real */}
-        <section
-          className="bg-[#131315] border border-[rgba(255,144,109,0.2)] rounded-[24px] flex flex-col gap-6 items-center px-8 pt-[57px] pb-8 relative overflow-hidden"
-        >
+        <section className="bg-[#131315] border border-[rgba(255,144,109,0.2)] rounded-[24px] flex flex-col gap-6 items-center px-8 pt-[57px] pb-8 relative overflow-hidden">
           <img
             src={imgQrCodeIcon}
             alt=""
@@ -176,8 +203,8 @@ export default async function HomePage() {
               Sumá más puntos
             </h3>
             <p className="text-[#adaaad] text-sm text-center max-w-[320px] leading-[22.75px]">
-              ¡No te olvides de hacer check-in! Escaneá el QR del gimnasio
-              para registrar esta sesión y sumar puntos.
+              ¡No te olvides de hacer check-in! Escaneá el QR del gimnasio para
+              registrar esta sesión y sumar puntos.
             </p>
           </div>
           <Link

@@ -42,6 +42,7 @@ export default async function RewardsPage() {
         .from("rewards")
         .select("*")
         .eq("is_active", true)
+        .is("reward_trigger", null) // excluye premios que se ganan (Reto 60), no se compran
         .order("cost_points", { ascending: true }),
       supabase
         .from("user_points_balance")

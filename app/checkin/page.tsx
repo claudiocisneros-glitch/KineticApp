@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Html5Qrcode } from "html5-qrcode";
+import Reto60Celebration from "@/components/Reto60Celebration";
 
 // stop() de esta librería puede tirar un error DE FORMA SÍNCRONA (no una
 // promesa rechazada) si el scanner no estaba corriendo. Un simple
@@ -23,19 +24,34 @@ async function safeStopAndClear(scanner: Html5Qrcode | null) {
   }
 }
 
+type Reto60Result = {
+  progress: number;
+  target: number;
+  daysLeft: number;
+  justCrossed: { at: number; kp: number; message: string } | null;
+  completed: boolean;
+} | null;
+
+type CheckinResult = {
+  breakdown: { total: number };
+  newBadges: string[];
+  reto60: Reto60Result;
+};
+
 export default function CheckinPage() {
   const router = useRouter();
-  const [status, setStatus] = useState<"scanning" | "loading" | "success" | "error">(
-    "scanning"
-  );
+  const [status, setStatus] = useState<
+    "scanning" | "loading" | "success" | "error"
+  >("scanning");
   const [message, setMessage] = useState<string | null>(null);
+  const [result, setResult] = useState<CheckinResult | null>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
 
   useEffect(() => {
     const qrRegionId = "qr-reader";
     let scanner: Html5Qrcode | null = null;
-    let cancelled = false; // true si el cleanup corrió antes de que start() termine
-    let started = false; // true solo si start() efectivamente resolvió
+    let cancelled = false;
+    let started = false;
 
     async function start() {
       scanner = new Html5Qrcode(qrRegionId);
@@ -47,7 +63,7 @@ export default function CheckinPage() {
           { fps: 10, qrbox: 250 },
           async (decodedText) => {
             if (cancelled) return;
-            started = false; // ya vamos a pararlo nosotros mismos
+            started = false;
             await safeStopAndClear(scanner);
             setStatus("loading");
             await handleCheckin(decodedText);
@@ -57,11 +73,6 @@ export default function CheckinPage() {
 
         started = true;
 
-        // Si el cleanup ya corrió mientras start() todavía estaba en
-        // vuelo (típico de React.StrictMode en desarrollo, o de Fast
-        // Refresh al guardar un archivo), lo paramos apenas termina de
-        // arrancar en vez de dejarlo corriendo sobre un componente ya
-        // desmontado.
         if (cancelled) {
           started = false;
           await safeStopAndClear(scanner);
@@ -100,9 +111,20 @@ export default function CheckinPage() {
       return;
     }
 
+    setResult(data);
     setStatus("success");
-    setMessage(`+${data.breakdown.total} KP`);
-    setTimeout(() => router.push("/"), 2000);
+
+    // Si completó el Reto 60, mostramos la celebración y esperamos el tap.
+    // Si no, redirigimos solos a los 2.5s.
+    const completedReto = data.newBadges?.includes("reto_60");
+    if (!completedReto) {
+      setTimeout(() => router.push("/"), 2500);
+    }
+  }
+
+  // Celebración a pantalla completa al completar el reto
+  if (status === "success" && result?.newBadges?.includes("reto_60")) {
+    return <Reto60Celebration onClose={() => router.push("/rewards/history")} />;
   }
 
   return (
@@ -116,14 +138,44 @@ export default function CheckinPage() {
         />
       )}
 
-      {status === "loading" && (
-        <p className="text-[#adaaad]">Procesando...</p>
-      )}
+      {status === "loading" && <p className="text-[#adaaad]">Procesando...</p>}
 
-      {status === "success" && (
-        <div className="text-center">
-          <p className="text-[#ff906d] font-black text-3xl">{message}</p>
+      {status === "success" && result && (
+        <div className="text-center max-w-xs w-full">
+          <p className="text-[#ff906d] font-black text-3xl">
+            +{result.breakdown.total} KP
+          </p>
           <p className="text-[#adaaad] mt-2">¡Buen entrenamiento!</p>
+
+          {result.reto60 && (
+            <div className="mt-6 bg-[#131315] border border-[rgba(72,71,74,0.15)] rounded-2xl p-4">
+              {result.reto60.justCrossed ? (
+                <p className="text-[#f9f5f8] font-bold text-sm">
+                  🎉 {result.reto60.justCrossed.message}
+                </p>
+              ) : (
+                <p className="text-[#f9f5f8] text-sm">
+                  Reto 60: {result.reto60.progress} de {result.reto60.target}.
+                  ¡Seguí así!
+                </p>
+              )}
+              <div className="h-2 bg-[#232329] rounded-full overflow-hidden mt-3">
+                <div
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${Math.min(
+                      100,
+                      Math.round(
+                        (result.reto60.progress / result.reto60.target) * 100
+                      )
+                    )}%`,
+                    backgroundImage:
+                      "linear-gradient(135deg, rgb(255, 120, 77) 0%, rgb(255, 102, 182) 100%)",
+                  }}
+                />
+              </div>
+            </div>
+          )}
         </div>
       )}
 

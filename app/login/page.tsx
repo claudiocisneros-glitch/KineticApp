@@ -4,6 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
+// Evita que Next.js intente pre-renderizar esta página como estática en el
+// build. El cliente de Supabase se crea recién en el request real, cuando
+// las env vars están disponibles — así el build no falla al prerenderizar.
+export const dynamic = "force-dynamic";
+
 const imgLogoIcon = "/logo.png";
 const imgHeroBackground = "/login-hero.png";
 

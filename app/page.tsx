@@ -7,7 +7,7 @@ import { buildReto60Status, RETO60 } from "@/lib/reto60";
 import BottomNav from "@/components/BottomNav";
 import AvatarMenu from "@/components/AvatarMenu";
 import AvatarGlyph from "@/components/AvatarGlyph";
-import Reto60Card from "@/components/Reto60Card";
+import Retos, { type ChallengeView } from "@/components/Retos";
 import {
   AiSearchBar,
   KpiGrid,
@@ -80,6 +80,18 @@ export default async function HomePage() {
     .eq("reward_trigger", "reto_60")
     .maybeSingle();
 
+  // Lista de retos (por ahora uno; la sección ya soporta varios)
+  const challenges: ChallengeView[] = [
+    {
+      id: "reto60",
+      name: "Reto 60",
+      status: reto60Status,
+      milestones: RETO60.milestones,
+      prizeName: prize?.name ?? null,
+      badgeIcon: "/badges/reto-60.svg",
+    },
+  ];
+
   return (
     <div className="bg-[#0e0e10] min-h-screen">
       {/* Header */}
@@ -129,8 +141,8 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* Reto 60 — objetivo de continuidad */}
-        <Reto60Card status={reto60Status} prizeName={prize?.name ?? null} />
+        {/* Retos — activos y finalizados */}
+        <Retos challenges={challenges} />
 
         {showPro && <KpiGrid />}
         {showPro && <PromotionsCarousel />}

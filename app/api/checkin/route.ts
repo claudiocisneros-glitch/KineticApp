@@ -17,8 +17,6 @@ export async function POST(req: Request) {
   }
 
   // 1. Validar que el QR sea el vigente (anti-abuso: rota periódicamente)
-  //    Se usa el cliente admin porque el usuario no tiene (ni debe tener)
-  //    permiso de leer esta tabla directo.
   const { data: qr, error: qrError } = await admin
     .from("gym_qr_codes")
     .select("*")
@@ -64,16 +62,22 @@ export async function POST(req: Request) {
       )
     : null;
 
-  // Nota: el cálculo de "semana consecutiva" real requiere lógica de calendario
-  // más fina (ver comentario al final del archivo) — acá se usa el contador
-  // ya persistido en profiles.current_streak_weeks como fuente de verdad.
+  // CAMBIO: recalcular la racha ANTES de puntuar, contra la tabla checkins.
+  // Corrige el valor guardado (p. ej. si se cortó por ausencia y nadie la
+  // apagó todavía). Este valor es la racha con la que el socio "llega" hoy;
+  // el check-in de hoy suma para la próxima. Fuente de verdad, no el número
+  // que estaba en profiles.
+  const { data: streakBefore } = await admin.rpc("recalc_streak", {
+    p_user_id: user.id,
+  });
+  const currentStreakWeeks = streakBefore ?? profile.current_streak_weeks ?? 0;
+
   const breakdown = calculatePoints({
     memberSince: new Date(profile.member_since),
-    currentStreakWeeks: profile.current_streak_weeks,
+    currentStreakWeeks,
   });
 
-  // 3. Registrar el check-in (admin: el usuario no tiene policy de INSERT,
-  //    a propósito — solo el servidor puede crear check-ins válidos)
+  // 3. Registrar el check-in (admin: el usuario no tiene policy de INSERT)
   const { data: checkin, error: checkinError } = await admin
     .from("checkins")
     .insert({
@@ -86,7 +90,7 @@ export async function POST(req: Request) {
     .single();
 
   if (checkinError) {
-    // Código 23505 = violación de constraint UNIQUE (ya hizo check-in hoy)
+    // 23505 = UNIQUE (ya hizo check-in hoy)
     if (checkinError.code === "23505") {
       return NextResponse.json(
         { error: "Ya registraste tu check-in de hoy. ¡Nos vemos mañana!" },
@@ -96,7 +100,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: checkinError.message }, { status: 500 });
   }
 
-  // 4. Sumar al ledger de puntos (admin: mismo motivo que arriba)
+  // 4. Sumar al ledger de puntos
   await admin.from("points_ledger").insert({
     user_id: user.id,
     amount: breakdown.total,
@@ -104,20 +108,26 @@ export async function POST(req: Request) {
     reference_id: checkin.id,
   });
 
-  // 5. Actualizar el perfil (última asistencia) — admin: no hay policy de
-  //    UPDATE para el usuario a propósito, evita que pueda "tocar" su
-  //    propio historial de asistencia manualmente.
+  // 5. Actualizar última asistencia
   await admin
     .from("profiles")
     .update({ last_checkin_at: new Date().toISOString() })
     .eq("id", user.id);
+
+  // CAMBIO: recalcular la racha DE NUEVO, ahora que el check-in de hoy ya
+  // está insertado. Deja current_streak_weeks al día para la UI, para el
+  // próximo check-in y para la evaluación de badges de abajo.
+  const { data: streakAfter } = await admin.rpc("recalc_streak", {
+    p_user_id: user.id,
+  });
+  const streakForBadges = streakAfter ?? currentStreakWeeks;
 
   // 6. Evaluar badges nuevos
   const newBadgeCodes = evaluateBadges({
     memberSince: new Date(profile.member_since),
     totalCheckins: (totalCheckinsBefore ?? 0) + 1,
     checkinsInFirst30Days: (checkinsFirst30Days ?? 0) + 1,
-    currentStreakWeeks: profile.current_streak_weeks,
+    currentStreakWeeks: streakForBadges,
     daysSinceLastCheckinBeforeThis: daysSinceLast,
   });
 
@@ -137,12 +147,3 @@ export async function POST(req: Request) {
 
   return NextResponse.json({ breakdown, newBadges: newBadgeCodes });
 }
-
-/**
- * PENDIENTE (marcado a propósito, no resuelto en este scaffold):
- * El cálculo de current_streak_weeks (si la racha sigue viva o se cortó)
- * requiere una función que corra por check-in o por cron diario, comparando
- * el check-in actual contra la semana calendario anterior. Se deja afuera
- * de este scaffold inicial para no sobre-construir antes de validar el
- * resto del loop — es la primera pieza a resolver en Claude Code.
- */

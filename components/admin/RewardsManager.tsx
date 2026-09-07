@@ -10,6 +10,7 @@ type Reward = {
   cost_points: number;
   is_active: boolean;
   max_redemptions_per_user: number | null;
+  reward_trigger: string | null;
 };
 
 type FormState = {
@@ -17,6 +18,7 @@ type FormState = {
   description: string;
   cost_points: string;
   max_redemptions_per_user: string;
+  reward_trigger: string; // "" = canje normal, "reto_60" = premio del Reto 60
 };
 
 const EMPTY_FORM: FormState = {
@@ -24,7 +26,16 @@ const EMPTY_FORM: FormState = {
   description: "",
   cost_points: "",
   max_redemptions_per_user: "",
+  reward_trigger: "",
 };
+
+// 1 visita = 100 KP. Referencia en vivo para que el dueño cargue costos
+// pensando en "visitas" y no en números al azar.
+const KP_PER_VISIT = 100;
+function visitsLabel(kp: number): string {
+  const v = Math.round((kp / KP_PER_VISIT) * 10) / 10;
+  return `≈ ${v} visita${v === 1 ? "" : "s"}`;
+}
 
 function RewardForm({
   initial,
@@ -45,18 +56,22 @@ function RewardForm({
             initial.max_redemptions_per_user != null
               ? String(initial.max_redemptions_per_user)
               : "",
+          reward_trigger: initial.reward_trigger ?? "",
         }
       : EMPTY_FORM
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const isReto60 = form.reward_trigger === "reto_60";
+  const costPreview = parseInt(form.cost_points, 10);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
 
-    const cost = parseInt(form.cost_points, 10);
-    if (!form.name.trim() || Number.isNaN(cost) || cost < 0) {
+    const cost = isReto60 ? 0 : parseInt(form.cost_points, 10);
+    if (!form.name.trim() || (!isReto60 && (Number.isNaN(cost) || cost < 0))) {
       setError("Nombre y costo en puntos son obligatorios.");
       return;
     }
@@ -69,6 +84,7 @@ function RewardForm({
       max_redemptions_per_user: form.max_redemptions_per_user.trim()
         ? parseInt(form.max_redemptions_per_user, 10)
         : null,
+      reward_trigger: form.reward_trigger || null,
     };
 
     const res = initial
@@ -95,38 +111,84 @@ function RewardForm({
     onSaved();
   }
 
+  const inputCls =
+    "bg-[#0e0e10] border border-[rgba(72,71,74,0.2)] rounded-xl px-4 py-2.5 text-sm text-[#f9f5f8] placeholder:text-[#adaaad]";
+
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-3">
       <input
         value={form.name}
         onChange={(e) => setForm({ ...form, name: e.target.value })}
         placeholder="Nombre de la recompensa"
-        className="bg-[#0e0e10] border border-[rgba(72,71,74,0.2)] rounded-xl px-4 py-2.5 text-sm text-[#f9f5f8] placeholder:text-[#adaaad]"
+        className={inputCls}
       />
       <input
         value={form.description}
         onChange={(e) => setForm({ ...form, description: e.target.value })}
         placeholder="Descripción (opcional)"
-        className="bg-[#0e0e10] border border-[rgba(72,71,74,0.2)] rounded-xl px-4 py-2.5 text-sm text-[#f9f5f8] placeholder:text-[#adaaad]"
+        className={inputCls}
       />
-      <div className="flex gap-3">
-        <input
-          type="number"
-          value={form.cost_points}
-          onChange={(e) => setForm({ ...form, cost_points: e.target.value })}
-          placeholder="Costo en KP"
-          className="bg-[#0e0e10] border border-[rgba(72,71,74,0.2)] rounded-xl px-4 py-2.5 text-sm text-[#f9f5f8] placeholder:text-[#adaaad] flex-1"
-        />
-        <input
-          type="number"
-          value={form.max_redemptions_per_user}
+
+      {/* Cómo se obtiene */}
+      <div className="flex flex-col gap-1">
+        <label className="text-[#adaaad] text-[10px] font-bold uppercase tracking-[0.5px]">
+          Cómo se obtiene
+        </label>
+        <select
+          value={form.reward_trigger}
           onChange={(e) =>
-            setForm({ ...form, max_redemptions_per_user: e.target.value })
+            setForm({ ...form, reward_trigger: e.target.value })
           }
-          placeholder="Límite por socio (opcional)"
-          className="bg-[#0e0e10] border border-[rgba(72,71,74,0.2)] rounded-xl px-4 py-2.5 text-sm text-[#f9f5f8] placeholder:text-[#adaaad] flex-1"
-        />
+          className={inputCls}
+        >
+          <option value="">Canje con puntos</option>
+          <option value="reto_60">Premio del Reto 60 (se gana)</option>
+        </select>
       </div>
+
+      {isReto60 ? (
+        <div className="bg-[#0e0e10] border border-[rgba(255,102,182,0.25)] rounded-xl px-4 py-3">
+          <p className="text-[#ff906d] text-xs font-bold">
+            Se entrega gratis al completar el Reto 60.
+          </p>
+          <p className="text-[#adaaad] text-[11px] mt-1">
+            No se canjea con puntos y no aparece en el catálogo. Solo puede
+            haber una recompensa marcada como premio del Reto 60.
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-1">
+          <div className="flex gap-3">
+            <input
+              type="number"
+              value={form.cost_points}
+              onChange={(e) =>
+                setForm({ ...form, cost_points: e.target.value })
+              }
+              placeholder="Costo en KP"
+              className={`${inputCls} flex-1`}
+            />
+            <input
+              type="number"
+              value={form.max_redemptions_per_user}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  max_redemptions_per_user: e.target.value,
+                })
+              }
+              placeholder="Límite por socio (opcional)"
+              className={`${inputCls} flex-1`}
+            />
+          </div>
+          {!Number.isNaN(costPreview) && costPreview > 0 && (
+            <p className="text-[#adaaad] text-[11px] pl-1">
+              {visitsLabel(costPreview)}
+            </p>
+          )}
+        </div>
+      )}
+
       {error && <p className="text-[#ff66b6] text-xs">{error}</p>}
       <div className="flex gap-2">
         <button
@@ -138,7 +200,11 @@ function RewardForm({
               "linear-gradient(135deg, rgb(255, 120, 77) 0%, rgb(255, 102, 182) 100%)",
           }}
         >
-          {loading ? "Guardando..." : initial ? "Guardar cambios" : "Crear recompensa"}
+          {loading
+            ? "Guardando..."
+            : initial
+            ? "Guardar cambios"
+            : "Crear recompensa"}
         </button>
         {onCancel && (
           <button
@@ -209,13 +275,26 @@ export default function RewardsManager({
               }`}
             >
               <div className="min-w-0">
-                <p className="text-[#f9f5f8] font-bold text-sm truncate">
-                  {r.name}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-[#f9f5f8] font-bold text-sm truncate">
+                    {r.name}
+                  </p>
+                  {r.reward_trigger === "reto_60" && (
+                    <span className="shrink-0 text-[9px] font-black uppercase tracking-[0.5px] text-[#ff906d] border border-[rgba(255,102,182,0.35)] rounded px-1.5 py-0.5">
+                      Reto 60
+                    </span>
+                  )}
+                </div>
                 <p className="text-[#adaaad] text-xs mt-1">
-                  {r.cost_points.toLocaleString()} KP
-                  {r.max_redemptions_per_user != null &&
-                    ` · máx ${r.max_redemptions_per_user} por socio`}
+                  {r.reward_trigger === "reto_60" ? (
+                    "Premio del Reto 60 · gratis al completarlo"
+                  ) : (
+                    <>
+                      {r.cost_points.toLocaleString()} KP · {visitsLabel(r.cost_points)}
+                      {r.max_redemptions_per_user != null &&
+                        ` · máx ${r.max_redemptions_per_user} por socio`}
+                    </>
+                  )}
                   {!r.is_active && " · inactiva"}
                 </p>
               </div>

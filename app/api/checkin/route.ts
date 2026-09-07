@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { calculatePoints, evaluateBadges } from "@/lib/points-engine";
+import { RETO60 } from "@/lib/reto60";
 
 export async function POST(req: Request) {
   const supabase = createClient(); // identifica quién es el usuario (RLS normal)
@@ -16,7 +17,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "No autenticado" }, { status: 401 });
   }
 
-  // 1. Validar que el QR sea el vigente (anti-abuso: rota periódicamente)
+  // 1. Validar que el QR sea el vigente
   const { data: qr, error: qrError } = await admin
     .from("gym_qr_codes")
     .select("*")
@@ -32,7 +33,7 @@ export async function POST(req: Request) {
     );
   }
 
-  // 2. Traer perfil y datos necesarios para calcular puntos y badges
+  // 2. Traer perfil y datos necesarios
   const { data: profile } = await supabase
     .from("profiles")
     .select("*")
@@ -62,11 +63,8 @@ export async function POST(req: Request) {
       )
     : null;
 
-  // CAMBIO: recalcular la racha ANTES de puntuar, contra la tabla checkins.
-  // Corrige el valor guardado (p. ej. si se cortó por ausencia y nadie la
-  // apagó todavía). Este valor es la racha con la que el socio "llega" hoy;
-  // el check-in de hoy suma para la próxima. Fuente de verdad, no el número
-  // que estaba en profiles.
+  // Racha ANTES de puntuar (corrige el valor guardado). El check-in de hoy
+  // suma para la próxima; el KP de hoy usa la racha con la que llega.
   const { data: streakBefore } = await admin.rpc("recalc_streak", {
     p_user_id: user.id,
   });
@@ -77,7 +75,7 @@ export async function POST(req: Request) {
     currentStreakWeeks,
   });
 
-  // 3. Registrar el check-in (admin: el usuario no tiene policy de INSERT)
+  // 3. Registrar el check-in
   const { data: checkin, error: checkinError } = await admin
     .from("checkins")
     .insert({
@@ -90,7 +88,6 @@ export async function POST(req: Request) {
     .single();
 
   if (checkinError) {
-    // 23505 = UNIQUE (ya hizo check-in hoy)
     if (checkinError.code === "23505") {
       return NextResponse.json(
         { error: "Ya registraste tu check-in de hoy. ¡Nos vemos mañana!" },
@@ -100,7 +97,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: checkinError.message }, { status: 500 });
   }
 
-  // 4. Sumar al ledger de puntos
+  // 4. Sumar KP del check-in al ledger
   await admin.from("points_ledger").insert({
     user_id: user.id,
     amount: breakdown.total,
@@ -114,15 +111,13 @@ export async function POST(req: Request) {
     .update({ last_checkin_at: new Date().toISOString() })
     .eq("id", user.id);
 
-  // CAMBIO: recalcular la racha DE NUEVO, ahora que el check-in de hoy ya
-  // está insertado. Deja current_streak_weeks al día para la UI, para el
-  // próximo check-in y para la evaluación de badges de abajo.
+  // Racha DESPUÉS de insertar (hoy ya cuenta): deja el contador al día.
   const { data: streakAfter } = await admin.rpc("recalc_streak", {
     p_user_id: user.id,
   });
   const streakForBadges = streakAfter ?? currentStreakWeeks;
 
-  // 6. Evaluar badges nuevos
+  // 6. Evaluar badges nuevos (los 4 de siempre)
   const newBadgeCodes = evaluateBadges({
     memberSince: new Date(profile.member_since),
     totalCheckins: (totalCheckinsBefore ?? 0) + 1,
@@ -145,5 +140,104 @@ export async function POST(req: Request) {
     }
   }
 
-  return NextResponse.json({ breakdown, newBadges: newBadgeCodes });
+  // 7. Reto 60 — progreso, hitos y premio final
+  //    Ventana = 60 días desde el PRIMER check-in. Mide frecuencia
+  //    (24 check-ins dentro de la ventana), no días consecutivos.
+  let reto60: {
+    progress: number;
+    target: number;
+    daysLeft: number;
+    justCrossed: { at: number; kp: number; message: string } | null;
+    completed: boolean;
+  } | null = null;
+
+  const { data: firstRow } = await admin
+    .from("checkins")
+    .select("checkin_date")
+    .eq("user_id", user.id)
+    .order("checkin_date", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (firstRow) {
+    const firstMs = new Date(firstRow.checkin_date + "T00:00").getTime();
+    const windowEndStr = new Date(firstMs + RETO60.windowDays * 86400000)
+      .toISOString()
+      .slice(0, 10);
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const withinWindow = todayStr < windowEndStr;
+
+    const { count: inWindow } = await admin
+      .from("checkins")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .gte("checkin_date", firstRow.checkin_date)
+      .lt("checkin_date", windowEndStr);
+
+    const progressAfter = inWindow ?? 0;
+    const progressBefore = withinWindow ? progressAfter - 1 : progressAfter;
+
+    let justCrossed: { at: number; kp: number; message: string } | null = null;
+    let justCompleted = false;
+
+    if (withinWindow) {
+      for (const m of RETO60.milestones) {
+        if (progressBefore < m.at && progressAfter >= m.at) {
+          // KP del hito al ledger
+          await admin.from("points_ledger").insert({
+            user_id: user.id,
+            amount: m.kp,
+            reason:
+              m.at === RETO60.target ? "reto60_complete" : "reto60_milestone",
+            reference_id: checkin.id,
+          });
+          justCrossed = { at: m.at, kp: m.kp, message: m.message };
+          if (m.at === RETO60.target) justCompleted = true;
+        }
+      }
+    }
+
+    if (justCompleted) {
+      // Badge Reto 60 (a lo grande en el front vía newBadges)
+      const { data: retoBadge } = await supabase
+        .from("badges")
+        .select("id")
+        .eq("code", "reto_60")
+        .maybeSingle();
+      if (retoBadge) {
+        await admin.from("user_badges").upsert(
+          [{ user_id: user.id, badge_id: retoBadge.id }],
+          { onConflict: "user_id,badge_id", ignoreDuplicates: true }
+        );
+        if (!newBadgeCodes.includes("reto_60")) newBadgeCodes.push("reto_60");
+      }
+
+      // Premio físico que el dueño haya marcado (si hay). Gratis.
+      const { data: prize } = await admin
+        .from("rewards")
+        .select("id")
+        .eq("reward_trigger", "reto_60")
+        .eq("is_active", true)
+        .maybeSingle();
+      if (prize) {
+        await admin.rpc("grant_reward_free", {
+          p_user_id: user.id,
+          p_reward_id: prize.id,
+        });
+      }
+    }
+
+    reto60 = {
+      progress: Math.min(progressAfter, RETO60.target),
+      target: RETO60.target,
+      daysLeft: Math.max(
+        0,
+        Math.ceil((firstMs + RETO60.windowDays * 86400000 - Date.now()) / 86400000)
+      ),
+      justCrossed,
+      completed: progressAfter >= RETO60.target,
+    };
+  }
+
+  return NextResponse.json({ breakdown, newBadges: newBadgeCodes, reto60 });
 }

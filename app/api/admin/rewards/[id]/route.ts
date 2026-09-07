@@ -35,6 +35,9 @@ export async function PATCH(
   )
     update.max_redemptions_per_user = body.max_redemptions_per_user;
   if (typeof body.is_active === "boolean") update.is_active = body.is_active;
+  // reward_trigger: 'reto_60' o null. Cualquier otro valor se normaliza a null.
+  if (body.reward_trigger !== undefined)
+    update.reward_trigger = body.reward_trigger === "reto_60" ? "reto_60" : null;
 
   if (Object.keys(update).length === 0) {
     return NextResponse.json({ error: "Nada para actualizar" }, { status: 400 });
@@ -47,6 +50,12 @@ export async function PATCH(
     .eq("id", params.id);
 
   if (error) {
+    if (error.code === "23505") {
+      return NextResponse.json(
+        { error: "Ya hay una recompensa marcada como premio del Reto 60. Cambiá la otra primero." },
+        { status: 409 }
+      );
+    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 

@@ -101,12 +101,12 @@ export default async function ImpactoPage() {
   const lastMonthKey = monthKey(lastMonthDate.getFullYear(), lastMonthDate.getMonth());
   let activeLast = 0;
   let retained = 0;
-  for (const [uid, months] of activeMonths) {
+  activeMonths.forEach((months) => {
     if (months.has(lastMonthKey)) {
       activeLast++;
       if (months.has(thisMonthKey)) retained++;
     }
-  }
+  });
   const retentionPct = activeLast > 0 ? Math.round((retained / activeLast) * 100) : null;
 
   // Cohortes: últimos 4 meses de alta, offsets 0..3

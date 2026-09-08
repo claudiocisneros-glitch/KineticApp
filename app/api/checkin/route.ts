@@ -227,16 +227,25 @@ export async function POST(req: Request) {
       }
     }
 
-    reto60 = {
-      progress: Math.min(progressAfter, RETO60.target),
-      target: RETO60.target,
-      daysLeft: Math.max(
-        0,
-        Math.ceil((firstMs + RETO60.windowDays * 86400000 - Date.now()) / 86400000)
-      ),
-      justCrossed,
-      completed: progressAfter >= RETO60.target,
-    };
+    // Solo devolvemos progreso del reto si sigue ACTIVO (dentro de la
+    // ventana y sin completar) o si justo se cruzó un hito. Si venció o ya
+    // estaba completo, no mandamos nada y el check-in no muestra esa línea.
+    const isActive = withinWindow && progressAfter < RETO60.target;
+    reto60 =
+      isActive || justCrossed
+        ? {
+            progress: Math.min(progressAfter, RETO60.target),
+            target: RETO60.target,
+            daysLeft: Math.max(
+              0,
+              Math.ceil(
+                (firstMs + RETO60.windowDays * 86400000 - Date.now()) / 86400000
+              )
+            ),
+            justCrossed,
+            completed: progressAfter >= RETO60.target,
+          }
+        : null;
   }
 
   return NextResponse.json({ breakdown, newBadges: newBadgeCodes, reto60 });

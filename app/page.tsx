@@ -40,8 +40,9 @@ export default async function HomePage() {
         .maybeSingle(),
       supabase
         .from("user_badges")
-        .select("badge_id, badges(name, description, icon_url)")
-        .eq("user_id", user!.id),
+        .select("badge_id, earned_at, badges(name, description, icon_url)")
+        .eq("user_id", user!.id)
+        .order("earned_at", { ascending: false }),
     ]);
 
   const balance = balanceRow?.balance ?? 0;
@@ -115,9 +116,19 @@ export default async function HomePage() {
 
         {/* Logros */}
         <section className="flex flex-col gap-4">
-          <h2 className="text-[#adaaad] text-sm font-black tracking-[3.2px] uppercase">
-            Tus logros
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-[#adaaad] text-sm font-black tracking-[3.2px] uppercase">
+              Tus logros
+            </h2>
+            {(userBadges ?? []).length > 0 && (
+              <Link
+                href="/logros"
+                className="text-[#ff906d] text-xs font-black uppercase tracking-[0.5px]"
+              >
+                Ver todos →
+              </Link>
+            )}
+          </div>
           {(userBadges ?? []).length === 0 ? (
             <p className="text-[#adaaad]/60 text-sm">
               Todavía no desbloqueaste ningún logro — ¡arrancá con tu primer
@@ -125,7 +136,7 @@ export default async function HomePage() {
             </p>
           ) : (
             <div className="grid grid-cols-2 gap-3">
-              {(userBadges ?? []).map((ub: any) => {
+              {(userBadges ?? []).slice(0, 2).map((ub: any) => {
                 const iconUrl: string | null = ub.badges.icon_url;
                 return (
                   <div

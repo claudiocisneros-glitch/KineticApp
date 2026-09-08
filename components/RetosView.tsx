@@ -5,8 +5,9 @@ import type { Reto60Status } from "@/lib/reto60";
 
 const GRAD =
   "linear-gradient(135deg, rgb(255, 120, 77) 0%, rgb(255, 102, 182) 100%)";
-const BANNER =
-  "linear-gradient(135deg, rgba(255,120,77,0.25) 0%, rgba(255,102,182,0.25) 100%)";
+// Foco de luz detrás del badge — le da impacto sin tapar el medallón.
+const GLOW =
+  "radial-gradient(circle at 50% 42%, rgba(255,102,182,0.45) 0%, rgba(255,120,77,0.18) 55%, rgba(19,19,21,0) 78%)";
 
 export type ChallengeView = {
   id: string;
@@ -84,13 +85,9 @@ export default function RetosView({
 
       {/* Contenido */}
       {list.length === 0 ? (
-        <p className="text-[#adaaad]/60 text-sm text-center py-10">
-          {tab === "curso"
-            ? "No tenés retos en curso ahora mismo."
-            : "Todavía no finalizaste ningún reto."}
-        </p>
+        <EmptyState tab={tab} />
       ) : (
-        <div className="flex flex-col gap-5">
+        <div className="grid grid-cols-2 gap-4">
           {list.map((c) =>
             tab === "curso" ? (
               <ActiveCard key={c.id} c={c} />
@@ -104,7 +101,7 @@ export default function RetosView({
       {showIntro && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center px-6">
           <div className="bg-[#131315] border border-[rgba(72,71,74,0.2)] rounded-3xl p-7 max-w-sm w-full text-center">
-            <img src={showIntro.badgeIcon} alt="" className="size-16 mx-auto mb-4" />
+            <img src={showIntro.badgeIcon} alt="" className="size-20 mx-auto mb-4" />
             <h2 className="text-[#f9f5f8] font-black text-xl mb-2">
               Tu {showIntro.name} arrancó
             </h2>
@@ -137,93 +134,65 @@ export default function RetosView({
   );
 }
 
+function EmptyState({ tab }: { tab: "curso" | "final" }) {
+  const copy =
+    tab === "curso"
+      ? {
+          title: "No hay retos en curso",
+          desc: "Cuando lancemos un reto nuevo te avisamos por notificación para que no te lo pierdas.",
+        }
+      : {
+          title: "Sin retos finalizados",
+          desc: "Acá vas a ver los retos que completes o que se te pasen.",
+        };
+  return (
+    <div className="text-center py-14 px-6">
+      <p className="text-[#f9f5f8] font-black text-base">{copy.title}</p>
+      <p className="text-[#adaaad] text-sm mt-2 max-w-[280px] mx-auto leading-relaxed">
+        {copy.desc}
+      </p>
+    </div>
+  );
+}
+
+// Card ocupa una "celda" de la grilla de 2 (no se estira al ancho completo).
 function ActiveCard({ c }: { c: ChallengeView }) {
   const s = c.status;
   const notStarted = s.state === "not_started";
-  const message = notStarted
-    ? "Hacé tu primer check-in para arrancar."
-    : s.toNext
-    ? `Te faltan ${s.toNext} para tu próxima recompensa`
-    : "¡Ya casi lo tenés!";
+  const sub = notStarted ? "Sin empezar" : `Quedan ${s.daysLeft} días`;
 
   return (
-    <div className="bg-[#131315] border border-[rgba(72,71,74,0.1)] rounded-2xl overflow-hidden">
-      {/* Banner */}
+    <div className="bg-[#131315] border border-[rgba(72,71,74,0.1)] rounded-2xl overflow-hidden flex flex-col">
       <div
-        className="relative h-32 flex items-center justify-center"
-        style={{ backgroundImage: BANNER }}
+        className="relative h-28 flex items-center justify-center"
+        style={{ backgroundImage: GLOW }}
       >
         <img src={c.badgeIcon} alt="" className="size-20" />
-        <span className="absolute top-3 left-3 bg-[rgba(38,37,40,0.6)] backdrop-blur-md text-[#ff906d] text-[10px] font-bold px-2 py-1 rounded-lg">
+        <span className="absolute top-2 left-2 bg-[rgba(38,37,40,0.6)] backdrop-blur-md text-[#ff906d] text-[9px] font-bold px-2 py-1 rounded-lg">
           {notStarted ? "Sin empezar" : "En curso"}
-        </span>
-        <span className="absolute top-3 right-3 bg-[rgba(38,37,40,0.6)] backdrop-blur-md text-[#adaaad] text-[10px] font-bold px-2 py-1 rounded-lg">
-          {s.daysLeft} días
         </span>
       </div>
 
-      {/* Cuerpo */}
-      <div className="p-5 flex flex-col gap-4">
+      <div className="p-4 flex flex-col gap-2.5 flex-1">
         <div>
-          <p className="text-[#f9f5f8] font-black text-lg tracking-[-0.4px]">
-            {c.name}
-          </p>
-          <p className="text-[#adaaad] text-xs mt-1">{message}</p>
+          <p className="text-[#f9f5f8] font-bold text-sm">{c.name}</p>
+          <p className="text-[#adaaad] text-[10px] mt-0.5">{sub}</p>
         </div>
 
-        <div className="flex flex-col gap-2">
-          <div className="flex justify-between text-[11px] font-black">
+        <div className="flex flex-col gap-1.5 mt-auto">
+          <div className="flex justify-between text-[10px] font-black">
             <span className="text-[#ff906d]">
-              {s.progress} / {s.target} check-ins
+              {s.progress}/{s.target}
             </span>
             <span className="text-[#adaaad]">{s.pct}%</span>
           </div>
-          <div className="bg-[#262528] h-2 rounded-full overflow-hidden">
+          <div className="bg-[#262528] h-1.5 rounded-full overflow-hidden">
             <div
               className="h-full rounded-full"
               style={{ width: `${s.pct}%`, backgroundImage: GRAD }}
             />
           </div>
         </div>
-
-        {/* Hitos */}
-        <div className="flex justify-between">
-          {c.milestones.map((m) => {
-            const done = s.progress >= m.at;
-            return (
-              <div
-                key={m.at}
-                className="flex flex-col items-center gap-1.5 flex-1"
-              >
-                <span
-                  className="size-2.5 rounded-full border-2"
-                  style={
-                    done
-                      ? { backgroundColor: "#ff66b6", borderColor: "#ff66b6" }
-                      : { backgroundColor: "#262528", borderColor: "#3a393c" }
-                  }
-                />
-                <span
-                  className={`text-[10px] ${
-                    done ? "text-[#adaaad]" : "text-[#6b6a6d]"
-                  }`}
-                >
-                  {m.at}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-
-        {c.prizeName && (
-          <div className="bg-[#1f1f22] border border-[rgba(72,71,74,0.15)] rounded-xl p-3 flex items-center gap-3">
-            <span className="text-xl">🏆</span>
-            <div className="min-w-0">
-              <p className="text-[#f9f5f8] text-xs font-bold">Premio</p>
-              <p className="text-[#adaaad] text-xs truncate">{c.prizeName}</p>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
@@ -235,15 +204,15 @@ function FinishedCard({ c }: { c: ChallengeView }) {
 
   return (
     <div
-      className={`bg-[#131315] border rounded-2xl overflow-hidden ${
+      className={`bg-[#131315] border rounded-2xl overflow-hidden flex flex-col ${
         completed
           ? "border-[rgba(255,144,109,0.25)]"
           : "border-[rgba(72,71,74,0.1)]"
       }`}
     >
       <div
-        className="relative h-32 flex items-center justify-center"
-        style={{ backgroundImage: completed ? BANNER : undefined }}
+        className="relative h-28 flex items-center justify-center"
+        style={completed ? { backgroundImage: GLOW } : undefined}
       >
         <img
           src={c.badgeIcon}
@@ -251,23 +220,19 @@ function FinishedCard({ c }: { c: ChallengeView }) {
           className={`size-20 ${completed ? "" : "grayscale opacity-40"}`}
         />
         <span
-          className={`absolute top-3 left-3 backdrop-blur-md text-[10px] font-bold px-2 py-1 rounded-lg ${
-            completed
-              ? "bg-[rgba(38,37,40,0.6)] text-[#ff906d]"
-              : "bg-[rgba(38,37,40,0.6)] text-[#adaaad]"
+          className={`absolute top-2 left-2 backdrop-blur-md text-[9px] font-bold px-2 py-1 rounded-lg bg-[rgba(38,37,40,0.6)] ${
+            completed ? "text-[#ff906d]" : "text-[#adaaad]"
           }`}
         >
           {completed ? "Completado" : "No completado"}
         </span>
       </div>
 
-      <div className="p-5">
-        <p className="text-[#f9f5f8] font-black text-lg tracking-[-0.4px]">
-          {c.name}
-        </p>
-        <p className="text-[#adaaad] text-sm mt-1">
+      <div className="p-4 flex flex-col gap-1 flex-1">
+        <p className="text-[#f9f5f8] font-bold text-sm">{c.name}</p>
+        <p className="text-[#adaaad] text-[10px] leading-snug">
           {completed
-            ? "Ganaste el badge y tu premio. ¡Bien ahí!"
+            ? "Ganaste el badge y tu premio."
             : `Llegaste a ${s.progress} de ${s.target}. La próxima la completás 💪`}
         </p>
       </div>

@@ -3,9 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isOwner } from "@/lib/auth/staff";
 
-// Editar un badge existente. Solo Dueño. No permite tocar `code` — es el
-// identificador que usa la lógica de evaluación de badges en el backend
-// (evaluateBadges), cambiarlo rompería esa referencia.
+// Editar un badge del catálogo. Solo Dueño.
 export async function PATCH(
   req: Request,
   { params }: { params: { id: string } }
@@ -24,12 +22,10 @@ export async function PATCH(
 
   const body = await req.json();
   const update: Record<string, unknown> = {};
-
   if (typeof body.name === "string") update.name = body.name;
-  if (typeof body.description === "string" || body.description === null)
-    update.description = body.description;
-  if (typeof body.icon_url === "string" || body.icon_url === null)
-    update.icon_url = body.icon_url;
+  if (body.description !== undefined)
+    update.description = body.description ?? null;
+  if (body.icon_url !== undefined) update.icon_url = body.icon_url ?? null;
 
   if (Object.keys(update).length === 0) {
     return NextResponse.json({ error: "Nada para actualizar" }, { status: 400 });
@@ -37,10 +33,37 @@ export async function PATCH(
 
   const admin = createAdminClient();
   const { error } = await admin.from("badges").update(update).eq("id", params.id);
-
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+  return NextResponse.json({ ok: true });
+}
 
+// Eliminar un badge. Solo Dueño. Primero se lo quita a los socios que lo
+// tengan (user_badges no borra en cascada), después se borra del catálogo.
+export async function DELETE(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+  }
+  if (!(await isOwner(user))) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+  }
+
+  const admin = createAdminClient();
+
+  await admin.from("user_badges").delete().eq("badge_id", params.id);
+
+  const { error } = await admin.from("badges").delete().eq("id", params.id);
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
   return NextResponse.json({ ok: true });
 }

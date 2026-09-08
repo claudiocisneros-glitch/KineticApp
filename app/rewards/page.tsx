@@ -79,7 +79,7 @@ export default async function RewardsPage() {
         <div className="flex items-center gap-4 min-w-0">
           <img src={imgLogoIcon} alt="Kinetic Gym" className="h-7 shrink-0" />
           <h1 className="font-black text-lg text-[#f9f5f8] tracking-[-0.9px] uppercase truncate">
-            Recompensas
+            Premios
           </h1>
         </div>
         <div className="flex items-center gap-3 shrink-0">

@@ -93,7 +93,7 @@ export default async function HomePage() {
               href="/rewards"
               className="bg-black text-white rounded-xl px-8 py-4 font-bold text-base tracking-[-0.4px] mt-4 shadow-[0px_20px_25px_-5px_rgba(0,0,0,0.1),0px_8px_10px_-6px_rgba(0,0,0,0.1)]"
             >
-              Ver recompensas disponibles
+              Ver premios disponibles
             </Link>
           </div>
         </section>

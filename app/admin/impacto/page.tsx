@@ -76,6 +76,22 @@ export default async function ImpactoPage() {
   const memberList = members ?? [];
   const checkinList = checkins ?? [];
 
+  // Socios en riesgo (real): lo llena el job nocturno recalc_member_risk()
+  const [{ data: riskRows }, { count: riskCount }] = await Promise.all([
+    admin
+      .from("member_risk")
+      .select("user_id, signals, score, reason, last_checkin, profiles(full_name)")
+      .order("score", { ascending: false })
+      .order("last_checkin", { ascending: true })
+      .limit(12),
+    admin.from("member_risk").select("*", { count: "exact", head: true }),
+  ]);
+  const risk = (riskRows ?? []) as any[];
+  const daysSince = (d: string | null) =>
+    d
+      ? Math.floor((Date.now() - new Date(d + "T00:00").getTime()) / 86400000)
+      : null;
+
   // Meses activos por usuario (para cohortes y retención)
   const activeMonths = new Map<string, Set<string>>();
   // Último check-in por usuario (para "activos" por ventana de días)
@@ -195,48 +211,87 @@ export default async function ImpactoPage() {
         <Hero label="Altas por referido" value="31" sub="datos de ejemplo" />
       </div>
 
-      {/* Seguimiento (ejemplo hasta tener el motor de riesgo) */}
+      {/* Seguimiento de socios */}
       <section className="bg-[#131315] border border-[rgba(72,71,74,0.1)] rounded-2xl p-5">
-        <div className="flex items-center gap-2 mb-1">
-          <h2 className="text-[#f9f5f8] font-black text-lg">Seguimiento de socios</h2>
-          <EjemploTag />
-        </div>
+        <h2 className="text-[#f9f5f8] font-black text-lg mb-1">
+          Seguimiento de socios
+        </h2>
         <p className="text-[#adaaad] text-xs mb-4">
           Cuando la línea de riesgo baja y la de activos sube, el sistema está
           reteniendo. La lista de abajo es la tarea de contacto del staff.
         </p>
 
+        {/* Gráfico: todavía con datos de ejemplo (falta el histórico) */}
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-[11px] font-black uppercase tracking-[1px] text-[#adaaad]">
+            Evolución semanal
+          </span>
+          <EjemploTag />
+        </div>
         <ImpactoChart />
 
-        <p className="text-[11px] font-black uppercase tracking-[1px] text-[#adaaad] mt-6 mb-3">
-          Socios en riesgo — contactar
-        </p>
-        <div className="border border-[rgba(72,71,74,0.15)] rounded-xl overflow-hidden">
-          {[
-            ["Juan Pérez", "Racha por caerse · hace 2 días", "Alto"],
-            ["Ana González", "Bajó la frecuencia · hace 5 días", "Medio"],
-            ["Luis Martínez", "Dejó de venir · hace 9 días", "Alto"],
-          ].map(([name, motivo, sev], i) => (
-            <div
-              key={i}
-              className="flex items-center justify-between gap-3 p-3 bg-[#1f1f22] border-b border-[rgba(72,71,74,0.12)] last:border-b-0"
-            >
-              <div className="min-w-0">
-                <p className="text-[#f9f5f8] text-sm font-semibold">{name}</p>
-                <p className="text-[#adaaad] text-xs">{motivo}</p>
-              </div>
-              <span
-                className={`text-[10px] font-black uppercase tracking-[0.5px] px-2 py-1 rounded ${
-                  sev === "Alto"
-                    ? "text-[#ff4e8a] bg-[rgba(255,78,138,0.14)]"
-                    : "text-[#ff8a5b] bg-[rgba(255,138,91,0.14)]"
-                }`}
-              >
-                {sev}
-              </span>
-            </div>
-          ))}
+        {/* Lista de riesgo: datos REALES desde member_risk */}
+        <div className="flex items-center justify-between mt-6 mb-3">
+          <span className="text-[11px] font-black uppercase tracking-[1px] text-[#adaaad]">
+            Socios en riesgo — contactar
+          </span>
+          {typeof riskCount === "number" && riskCount > 0 && (
+            <span className="text-[11px] text-[#5e5e67]">
+              {riskCount} en total
+            </span>
+          )}
         </div>
+
+        {risk.length === 0 ? (
+          <div className="bg-[#1f1f22] border border-[rgba(72,71,74,0.12)] rounded-xl p-5 text-center">
+            <p className="text-[#f9f5f8] text-sm font-semibold">
+              No hay socios en riesgo hoy 🎉
+            </p>
+            <p className="text-[#adaaad] text-xs mt-1">
+              La lista se actualiza cada noche.
+            </p>
+          </div>
+        ) : (
+          <div className="border border-[rgba(72,71,74,0.15)] rounded-xl overflow-hidden">
+            {risk.map((r) => {
+              const name = r.profiles?.full_name ?? "Socio";
+              const days = daysSince(r.last_checkin);
+              const visita =
+                days === null
+                  ? "sin check-ins"
+                  : days === 0
+                  ? "vino hoy"
+                  : `hace ${days} día${days === 1 ? "" : "s"}`;
+              const alto =
+                (Array.isArray(r.signals) && r.signals.includes("absent")) ||
+                r.score >= 2;
+              return (
+                <div
+                  key={r.user_id}
+                  className="flex items-center justify-between gap-3 p-3 bg-[#1f1f22] border-b border-[rgba(72,71,74,0.12)] last:border-b-0"
+                >
+                  <div className="min-w-0">
+                    <p className="text-[#f9f5f8] text-sm font-semibold truncate">
+                      {name}
+                    </p>
+                    <p className="text-[#adaaad] text-xs">
+                      {r.reason} · última visita {visita}
+                    </p>
+                  </div>
+                  <span
+                    className={`shrink-0 text-[10px] font-black uppercase tracking-[0.5px] px-2 py-1 rounded ${
+                      alto
+                        ? "text-[#ff4e8a] bg-[rgba(255,78,138,0.14)]"
+                        : "text-[#ff8a5b] bg-[rgba(255,138,91,0.14)]"
+                    }`}
+                  >
+                    {alto ? "Alto" : "Medio"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       {/* Cohortes reales */}

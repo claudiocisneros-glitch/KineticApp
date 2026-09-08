@@ -1,11 +1,13 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { isStaff } from "@/lib/auth/staff";
 import { getViewMode } from "@/lib/view-mode";
 import BottomNav from "@/components/BottomNav";
 import AvatarMenu from "@/components/AvatarMenu";
 import AvatarGlyph from "@/components/AvatarGlyph";
+import InviteCard from "@/components/InviteCard";
 import {
   AiSearchBar,
   KpiGrid,
@@ -46,6 +48,15 @@ export default async function HomePage() {
     ]);
 
   const balance = balanceRow?.balance ?? 0;
+
+  // Referidos premiados del socio (para el progreso del badge). Va con admin
+  // porque RLS no deja leer las filas de otros socios.
+  const adminClient = createAdminClient();
+  const { count: referredCount } = await adminClient
+    .from("profiles")
+    .select("*", { count: "exact", head: true })
+    .eq("referred_by", user!.id)
+    .not("referral_rewarded_at", "is", null);
   const staff = await isStaff(user);
   const showPro = staff && getViewMode() === "pro";
 
@@ -93,7 +104,7 @@ export default async function HomePage() {
               href="/rewards"
               className="bg-black text-white rounded-xl px-8 py-4 font-bold text-base tracking-[-0.4px] mt-4 shadow-[0px_20px_25px_-5px_rgba(0,0,0,0.1),0px_8px_10px_-6px_rgba(0,0,0,0.1)]"
             >
-              Ver premios disponibles
+              Ver recompensas disponibles
             </Link>
           </div>
         </section>
@@ -164,6 +175,14 @@ export default async function HomePage() {
             </div>
           )}
         </section>
+
+        {/* Invitá y ganá */}
+        {profile?.referral_code && (
+          <InviteCard
+            code={profile.referral_code}
+            referredCount={referredCount ?? 0}
+          />
+        )}
 
         {showPro && <UpcomingActivities />}
 

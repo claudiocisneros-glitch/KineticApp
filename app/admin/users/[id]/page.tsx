@@ -5,12 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getStaffRole } from "@/lib/auth/staff";
 import AdjustPointsForm from "@/components/admin/AdjustPointsForm";
 import EditNameForm from "@/components/admin/EditNameForm";
-
-const REASON_LABELS: Record<string, string> = {
-  checkin: "Check-in",
-  redemption: "Canje",
-  adjustment: "Ajuste manual",
-};
+import UserActivityTabs from "@/components/admin/UserActivityTabs";
 
 export default async function AdminUserDetailPage({
   params,
@@ -90,9 +85,7 @@ export default async function AdminUserDetailPage({
           {profile.full_name ?? "Sin nombre"}
         </h1>
         <p className="text-[#adaaad] text-sm mt-1">{email}</p>
-        {role === "owner" && (
-          <EditNameForm userId={params.id} initialName={profile.full_name ?? ""} />
-        )}
+        <EditNameForm userId={params.id} initialName={profile.full_name ?? ""} />
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -200,74 +193,12 @@ export default async function AdminUserDetailPage({
         )}
       </section>
 
-      <section>
-        <h2 className="text-[#adaaad] text-sm font-black tracking-[3.2px] uppercase mb-3">
-          Asistencias recientes
-        </h2>
-        {(checkins ?? []).length === 0 ? (
-          <p className="text-[#adaaad] text-sm">Todavía no registró check-ins.</p>
-        ) : (
-          <div className="flex flex-col gap-1">
-            {(checkins ?? []).map((c: any, i: number) => (
-              <div
-                key={i}
-                className="flex items-center justify-between px-1 py-2 border-b border-[rgba(72,71,74,0.1)]"
-              >
-                <p className="text-[#f9f5f8] text-xs">
-                  {new Date(c.checkin_date).toLocaleDateString("es-AR", {
-                    weekday: "short",
-                    day: "2-digit",
-                    month: "short",
-                  })}
-                </p>
-                <span className="text-[#ff906d] font-black text-xs">
-                  +{c.points_awarded} KP
-                </span>
-              </div>
-            ))}
-            {(checkinsCount ?? 0) > (checkins?.length ?? 0) && (
-              <p className="text-[#adaaad]/70 text-[10px] mt-1">
-                Mostrando las {checkins?.length} más recientes de {checkinsCount} en total.
-              </p>
-            )}
-          </div>
-        )}
-      </section>
+      <UserActivityTabs
+        checkins={checkins ?? []}
+        ledger={ledger ?? []}
+        checkinsCount={checkinsCount ?? 0}
+      />
 
-      <section>
-        <h2 className="text-[#adaaad] text-sm font-black tracking-[3.2px] uppercase mb-3">
-          Movimientos de puntos
-        </h2>
-        {(ledger ?? []).length === 0 ? (
-          <p className="text-[#adaaad] text-sm">Sin movimientos todavía.</p>
-        ) : (
-          <div className="flex flex-col gap-1">
-            {(ledger ?? []).map((l: any) => (
-              <div
-                key={l.id}
-                className="flex items-center justify-between px-1 py-2 border-b border-[rgba(72,71,74,0.1)]"
-              >
-                <div>
-                  <p className="text-[#f9f5f8] text-xs">
-                    {REASON_LABELS[l.reason] ?? l.reason}
-                  </p>
-                  <p className="text-[#adaaad]/70 text-[10px]">
-                    {new Date(l.created_at).toLocaleString("es-AR")}
-                  </p>
-                </div>
-                <span
-                  className={`font-black text-sm ${
-                    l.amount >= 0 ? "text-[#ff906d]" : "text-[#adaaad]"
-                  }`}
-                >
-                  {l.amount >= 0 ? "+" : ""}
-                  {l.amount} KP
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
     </div>
   );
 }

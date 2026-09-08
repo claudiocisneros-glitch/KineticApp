@@ -20,6 +20,7 @@ const NAV_ITEMS: { href: string; label: string; roles: StaffRole[] }[] = [
   { href: "/admin/rewards", label: "Recompensas", roles: ["owner"] },
   { href: "/admin/badges", label: "Badges", roles: ["owner", "reception"] },
   { href: "/admin/staff", label: "Staff", roles: ["owner"] },
+  { href: "/admin/impacto", label: "Impacto", roles: ["owner"] },
 ];
 
 export default function AdminNav({ role }: { role: StaffRole }) {

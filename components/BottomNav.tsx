@@ -8,6 +8,9 @@ import { usePathname } from "next/navigation";
 // contenido de muestra sin backend real todavía, así que a un socio común
 // no le sirve ver un link a algo que no existe — mismo criterio que el
 // resto de la vista Pro.
+//
+// Retos se suma a ambas vistas. En la vista de socio queda centrado el
+// botón de QR con Inicio+Retos a la izquierda y Recompensas a la derecha.
 
 function HomeIcon() {
   return (
@@ -23,6 +26,25 @@ function HomeIcon() {
     >
       <path d="M3 9.5 10 3l7 6.5" />
       <path d="M5 8.5V17h10V8.5" />
+    </svg>
+  );
+}
+
+function RetosIcon() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="10" cy="10" r="7.2" />
+      <circle cx="10" cy="10" r="3.4" />
+      <circle cx="10" cy="10" r="0.5" fill="currentColor" stroke="none" />
     </svg>
   );
 }
@@ -109,10 +131,10 @@ export default function BottomNav({ showPro = false }: { showPro?: boolean }) {
       active ? "text-[#ff906d]" : "text-[#adaaad]"
     }`;
 
-  const qrButton = (
+  const qrButton = (colStart: string) => (
     <Link
       href="/checkin"
-      className="justify-self-center rounded-full p-1 -mt-9 shadow-[0px_10px_15px_-3px_rgba(255,144,109,0.2),0px_4px_6px_-4px_rgba(255,144,109,0.2)] border-4 border-[#0e0e10]"
+      className={`${colStart} justify-self-center rounded-full p-1 -mt-9 shadow-[0px_10px_15px_-3px_rgba(255,144,109,0.2),0px_4px_6px_-4px_rgba(255,144,109,0.2)] border-4 border-[#0e0e10]`}
       style={{
         backgroundImage:
           "linear-gradient(135deg, rgb(255, 120, 77) 0%, rgb(255, 102, 182) 100%)",
@@ -125,19 +147,34 @@ export default function BottomNav({ showPro = false }: { showPro?: boolean }) {
   );
 
   if (!showPro) {
+    // 5 columnas: Inicio | Retos | [QR centrado] | (gap) | Recompensas
     return (
       <nav
-        className="bg-[#0e0e10] border-t border-[rgba(72,71,74,0.1)] fixed bottom-0 left-0 right-0 z-50 grid grid-cols-3 items-center pt-[14px] px-6 w-full max-w-[390px] mx-auto"
+        className="bg-[#0e0e10] border-t border-[rgba(72,71,74,0.1)] fixed bottom-0 left-0 right-0 z-50 grid grid-cols-5 items-center pt-[14px] px-4 w-full max-w-[390px] mx-auto"
         style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
       >
-        <Link href="/" className={`${linkClass(pathname === "/")} justify-self-start`}>
+        <Link
+          href="/"
+          className={`${linkClass(pathname === "/")} col-start-1 justify-self-start`}
+        >
           <HomeIcon />
           <span>Inicio</span>
         </Link>
-        {qrButton}
+        <Link
+          href="/retos"
+          className={`${linkClass(
+            pathname === "/retos"
+          )} col-start-2 justify-self-center`}
+        >
+          <RetosIcon />
+          <span>Retos</span>
+        </Link>
+        {qrButton("col-start-3")}
         <Link
           href="/rewards"
-          className={`${linkClass(pathname === "/rewards")} justify-self-end`}
+          className={`${linkClass(
+            pathname === "/rewards"
+          )} col-start-5 justify-self-end`}
         >
           <RewardsIcon />
           <span>Recompensas</span>
@@ -146,12 +183,13 @@ export default function BottomNav({ showPro = false }: { showPro?: boolean }) {
     );
   }
 
+  // Pro: 6 columnas — Inicio | Clases | Retos | [QR] | Recomp | Stats
   return (
     <nav
-      className="bg-[#0e0e10] border-t border-[rgba(72,71,74,0.1)] fixed bottom-0 left-0 right-0 z-50 grid grid-cols-5 items-center pt-[14px] px-3 w-full max-w-[390px] mx-auto"
+      className="bg-[#0e0e10] border-t border-[rgba(72,71,74,0.1)] fixed bottom-0 left-0 right-0 z-50 grid grid-cols-6 items-center pt-[14px] px-2 w-full max-w-[390px] mx-auto"
       style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
     >
-      <Link href="/" className={`${linkClass(pathname === "/")} justify-self-start`}>
+      <Link href="/" className={`${linkClass(pathname === "/")} justify-self-center`}>
         <HomeIcon />
         <span>Inicio</span>
       </Link>
@@ -162,7 +200,14 @@ export default function BottomNav({ showPro = false }: { showPro?: boolean }) {
         <ClassesIcon />
         <span>Clases</span>
       </Link>
-      {qrButton}
+      <Link
+        href="/retos"
+        className={`${linkClass(pathname === "/retos")} justify-self-center`}
+      >
+        <RetosIcon />
+        <span>Retos</span>
+      </Link>
+      {qrButton("")}
       <Link
         href="/rewards"
         className={`${linkClass(pathname === "/rewards")} justify-self-center`}
@@ -172,7 +217,7 @@ export default function BottomNav({ showPro = false }: { showPro?: boolean }) {
       </Link>
       <Link
         href="/stats"
-        className={`${linkClass(pathname === "/stats")} justify-self-end`}
+        className={`${linkClass(pathname === "/stats")} justify-self-center`}
       >
         <StatsIcon />
         <span>Stats</span>

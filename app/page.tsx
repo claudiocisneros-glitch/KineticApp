@@ -3,11 +3,9 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { isStaff } from "@/lib/auth/staff";
 import { getViewMode } from "@/lib/view-mode";
-import { buildReto60Status, RETO60 } from "@/lib/reto60";
 import BottomNav from "@/components/BottomNav";
 import AvatarMenu from "@/components/AvatarMenu";
 import AvatarGlyph from "@/components/AvatarGlyph";
-import Retos, { type ChallengeView } from "@/components/Retos";
 import {
   AiSearchBar,
   KpiGrid,
@@ -49,48 +47,6 @@ export default async function HomePage() {
   const balance = balanceRow?.balance ?? 0;
   const staff = await isStaff(user);
   const showPro = staff && getViewMode() === "pro";
-
-  // ---- Estado del Reto 60 (derivado de checkins + primer check-in) ----
-  const { data: firstCheckin } = await supabase
-    .from("checkins")
-    .select("checkin_date")
-    .eq("user_id", user!.id)
-    .order("checkin_date", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-
-  let reto60Status = buildReto60Status(null, 0);
-  if (firstCheckin) {
-    const firstMs = new Date(firstCheckin.checkin_date + "T00:00").getTime();
-    const windowEndStr = new Date(firstMs + RETO60.windowDays * 86400000)
-      .toISOString()
-      .slice(0, 10);
-    const { count } = await supabase
-      .from("checkins")
-      .select("*", { count: "exact", head: true })
-      .eq("user_id", user!.id)
-      .gte("checkin_date", firstCheckin.checkin_date)
-      .lt("checkin_date", windowEndStr);
-    reto60Status = buildReto60Status(new Date(firstMs), count ?? 0);
-  }
-
-  const { data: prize } = await supabase
-    .from("rewards")
-    .select("name")
-    .eq("reward_trigger", "reto_60")
-    .maybeSingle();
-
-  // Lista de retos (por ahora uno; la sección ya soporta varios)
-  const challenges: ChallengeView[] = [
-    {
-      id: "reto60",
-      name: "Reto 60",
-      status: reto60Status,
-      milestones: RETO60.milestones,
-      prizeName: prize?.name ?? null,
-      badgeIcon: "/badges/reto-60.svg",
-    },
-  ];
 
   return (
     <div className="bg-[#0e0e10] min-h-screen">
@@ -140,9 +96,6 @@ export default async function HomePage() {
             </Link>
           </div>
         </section>
-
-        {/* Retos — activos y finalizados */}
-        <Retos challenges={challenges} />
 
         {showPro && <KpiGrid />}
         {showPro && <PromotionsCarousel />}

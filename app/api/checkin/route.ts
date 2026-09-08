@@ -248,5 +248,20 @@ export async function POST(req: Request) {
         : null;
   }
 
-  return NextResponse.json({ breakdown, newBadges: newBadgeCodes, reto60 });
+  // 8. Referido: si es el PRIMER check-in y vino recomendado, se premia a
+  //    ambos (el pago está implícito en que el staff lo dio de alta).
+  let referral: { welcomeKp: number } | null = null;
+  if ((totalCheckinsBefore ?? 0) === 0) {
+    const { data: refRes } = await admin.rpc("reward_referral", {
+      p_referred_id: user.id,
+    });
+    if (refRes?.rewarded) referral = { welcomeKp: refRes.welcome_kp };
+  }
+
+  return NextResponse.json({
+    breakdown,
+    newBadges: newBadgeCodes,
+    reto60,
+    referral,
+  });
 }

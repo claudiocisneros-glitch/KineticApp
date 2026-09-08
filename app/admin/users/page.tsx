@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStaffRole } from "@/lib/auth/staff";
 import UsersTable from "@/components/admin/UsersTable";
+import NewMemberForm from "@/components/admin/NewMemberForm";
 
 export default async function AdminUsersPage() {
   const supabase = createClient();
@@ -49,6 +50,7 @@ export default async function AdminUsersPage() {
   return (
     <div className="pt-2">
       <h1 className="text-2xl text-[#f9f5f8] font-black mb-6">Socios</h1>
+      <NewMemberForm />
       <UsersTable members={members} />
     </div>
   );

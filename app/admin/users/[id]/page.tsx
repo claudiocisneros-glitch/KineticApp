@@ -6,6 +6,7 @@ import { getStaffRole } from "@/lib/auth/staff";
 import AdjustPointsForm from "@/components/admin/AdjustPointsForm";
 import EditNameForm from "@/components/admin/EditNameForm";
 import UserActivityTabs from "@/components/admin/UserActivityTabs";
+import ResetPasswordButton from "@/components/admin/ResetPasswordButton";
 
 export default async function AdminUserDetailPage({
   params,
@@ -86,6 +87,7 @@ export default async function AdminUserDetailPage({
         </h1>
         <p className="text-[#adaaad] text-sm mt-1">{email}</p>
         <EditNameForm userId={params.id} initialName={profile.full_name ?? ""} />
+        <ResetPasswordButton userId={params.id} />
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

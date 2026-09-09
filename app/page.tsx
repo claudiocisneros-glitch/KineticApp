@@ -67,7 +67,13 @@ export default async function HomePage() {
         <img src={imgLogoIcon} alt="Kinetic Gym" className="h-7 shrink-0" />
         <div className="flex items-center gap-3 shrink-0">
           <img src={imgBellIcon} alt="Notificaciones" className="size-9" />
-          {staff ? <AvatarMenu currentMode={getViewMode()} /> : <AvatarGlyph />}
+          {staff ? (
+            <AvatarMenu currentMode={getViewMode()} />
+          ) : (
+            <Link href="/cuenta">
+              <AvatarGlyph />
+            </Link>
+          )}
         </div>
       </header>
 

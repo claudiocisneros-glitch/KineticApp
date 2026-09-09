@@ -7,8 +7,6 @@ import ImpactoChart from "@/components/admin/ImpactoChart";
 const GRAD =
   "linear-gradient(135deg, rgb(255, 120, 77) 0%, rgb(255, 102, 182) 100%)";
 const MONTHS = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-
-// Definición de socio activo (configurable a futuro). Afecta KPIs y cohortes.
 const ACTIVE_WINDOW_DAYS = 21;
 
 function monthKey(y: number, m: number) {
@@ -60,24 +58,25 @@ export default async function ImpactoPage() {
   if (!(await isOwner(user))) redirect("/admin");
 
   const admin = createAdminClient();
-
-  // ------- Datos reales -------
   const now = new Date();
   const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+  const monthStartStr = new Date(now.getFullYear(), now.getMonth(), 1)
+    .toISOString()
+    .slice(0, 10);
 
-  const [{ data: members }, { data: checkins }] = await Promise.all([
+  const [
+    { data: members },
+    { data: checkins },
+    { data: riskRows },
+    { count: riskCount },
+    { data: snaps },
+    { count: referralSignups },
+  ] = await Promise.all([
     admin.from("profiles").select("id, member_since").is("role", null),
     admin
       .from("checkins")
       .select("user_id, checkin_date")
       .gte("checkin_date", sixMonthsAgo.toISOString().slice(0, 10)),
-  ]);
-
-  const memberList = members ?? [];
-  const checkinList = checkins ?? [];
-
-  // Socios en riesgo (real): lo llena el job nocturno recalc_member_risk()
-  const [{ data: riskRows }, { count: riskCount }] = await Promise.all([
     admin
       .from("member_risk")
       .select("user_id, signals, score, reason, last_checkin, profiles(full_name)")
@@ -85,33 +84,46 @@ export default async function ImpactoPage() {
       .order("last_checkin", { ascending: true })
       .limit(12),
     admin.from("member_risk").select("*", { count: "exact", head: true }),
+    admin
+      .from("activity_snapshots")
+      .select("snapshot_date, active_count, risk_count")
+      .order("snapshot_date", { ascending: true })
+      .limit(400),
+    admin
+      .from("profiles")
+      .select("*", { count: "exact", head: true })
+      .gte("referral_rewarded_at", monthStartStr),
   ]);
+
+  const memberList = members ?? [];
+  const checkinList = checkins ?? [];
   const risk = (riskRows ?? []) as any[];
+
+  // Emails de los socios en riesgo (viven en Auth, no en profiles)
+  const riskWithEmail = await Promise.all(
+    risk.map(async (r) => {
+      const { data: au } = await admin.auth.admin.getUserById(r.user_id);
+      return { ...r, email: au?.user?.email ?? null };
+    })
+  );
+
+  const snapshots = (snaps ?? []).map((s: any) => ({
+    date: s.snapshot_date,
+    active: s.active_count,
+    risk: s.risk_count,
+  }));
+
   const daysSince = (d: string | null) =>
-    d
-      ? Math.floor((Date.now() - new Date(d + "T00:00").getTime()) / 86400000)
-      : null;
+    d ? Math.floor((Date.now() - new Date(d + "T00:00").getTime()) / 86400000) : null;
 
-  // Meses activos por usuario (para cohortes y retención)
+  // ---- Retención mensual (real) ----
   const activeMonths = new Map<string, Set<string>>();
-  // Último check-in por usuario (para "activos" por ventana de días)
-  const activeSet = new Set<string>();
-  const cutoff = new Date(now);
-  cutoff.setDate(cutoff.getDate() - (ACTIVE_WINDOW_DAYS - 1));
-  const cutoffStr = cutoff.toISOString().slice(0, 10);
-
   for (const c of checkinList) {
     const d = new Date(c.checkin_date + "T00:00");
     const key = monthKey(d.getFullYear(), d.getMonth());
     if (!activeMonths.has(c.user_id)) activeMonths.set(c.user_id, new Set());
     activeMonths.get(c.user_id)!.add(key);
-    if (c.checkin_date >= cutoffStr) activeSet.add(c.user_id);
   }
-
-  const totalMembers = memberList.length;
-  const activeMembers = activeSet.size;
-
-  // Retención mensual: de los activos el mes pasado, cuántos siguen activos este mes
   const thisMonthKey = monthKey(now.getFullYear(), now.getMonth());
   const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const lastMonthKey = monthKey(lastMonthDate.getFullYear(), lastMonthDate.getMonth());
@@ -125,7 +137,7 @@ export default async function ImpactoPage() {
   });
   const retentionPct = activeLast > 0 ? Math.round((retained / activeLast) * 100) : null;
 
-  // Cohortes: últimos 4 meses de alta, offsets 0..3
+  // ---- Cohortes (real) ----
   const membersByCohort = new Map<string, string[]>();
   for (const p of memberList) {
     if (!p.member_since) continue;
@@ -134,28 +146,18 @@ export default async function ImpactoPage() {
     if (!membersByCohort.has(key)) membersByCohort.set(key, []);
     membersByCohort.get(key)!.push(p.id);
   }
-
   const curIndex = now.getFullYear() * 12 + now.getMonth();
-  const cohortRows = [] as {
-    label: string;
-    size: number;
-    cells: (number | null)[];
-  }[];
+  const cohortRows: { label: string; size: number; cells: (number | null)[] }[] = [];
   for (let back = 3; back >= 0; back--) {
-    const cy = now.getFullYear();
-    const cm = now.getMonth() - back;
-    const cohortDate = new Date(cy, cm, 1);
+    const cohortDate = new Date(now.getFullYear(), now.getMonth() - back, 1);
     const key = monthKey(cohortDate.getFullYear(), cohortDate.getMonth());
     const ids = membersByCohort.get(key) ?? [];
     const size = ids.length;
     const cells: (number | null)[] = [];
     for (let k = 0; k <= 3; k++) {
-      const targetIndex = cohortDate.getFullYear() * 12 + cohortDate.getMonth() + k;
-      if (targetIndex > curIndex) {
-        cells.push(null); // mes que todavía no transcurrió
-        continue;
-      }
-      if (size === 0) {
+      const targetIndex =
+        cohortDate.getFullYear() * 12 + cohortDate.getMonth() + k;
+      if (targetIndex > curIndex || size === 0) {
         cells.push(null);
         continue;
       }
@@ -163,11 +165,7 @@ export default async function ImpactoPage() {
         cells.push(100);
         continue;
       }
-      const td = new Date(
-        cohortDate.getFullYear(),
-        cohortDate.getMonth() + k,
-        1
-      );
+      const td = new Date(cohortDate.getFullYear(), cohortDate.getMonth() + k, 1);
       const tKey = monthKey(td.getFullYear(), td.getMonth());
       let activeInMonth = 0;
       for (const id of ids) {
@@ -175,13 +173,8 @@ export default async function ImpactoPage() {
       }
       cells.push(Math.round((activeInMonth / size) * 100));
     }
-    cohortRows.push({
-      label: MONTHS[cohortDate.getMonth()],
-      size,
-      cells,
-    });
+    cohortRows.push({ label: MONTHS[cohortDate.getMonth()], size, cells });
   }
-
   function shade(v: number | null) {
     if (v === null) return null;
     const t = Math.max(0, Math.min(1, (v - 55) / 45));
@@ -200,18 +193,22 @@ export default async function ImpactoPage() {
       </div>
 
       {/* KPIs reales */}
-      <div className="grid grid-cols-3 gap-3">
-        <Hero label="Socios activos" value={activeMembers.toLocaleString()} sub={`${totalMembers.toLocaleString()} en total`} accent />
+      <div className="grid grid-cols-2 gap-3">
         <Hero
           label="Retención mensual"
           value={retentionPct !== null ? `${retentionPct}%` : "—"}
           sub="vs. mes anterior"
           accent
         />
-        <Hero label="Altas por referido" value="31" sub="datos de ejemplo" />
+        <Hero
+          label="Altas por referido"
+          value={(referralSignups ?? 0).toString()}
+          sub="este mes"
+          accent
+        />
       </div>
 
-      {/* Seguimiento de socios */}
+      {/* Seguimiento */}
       <section className="bg-[#131315] border border-[rgba(72,71,74,0.1)] rounded-2xl p-5">
         <h2 className="text-[#f9f5f8] font-black text-lg mb-1">
           Seguimiento de socios
@@ -221,28 +218,19 @@ export default async function ImpactoPage() {
           reteniendo. La lista de abajo es la tarea de contacto del staff.
         </p>
 
-        {/* Gráfico: todavía con datos de ejemplo (falta el histórico) */}
-        <div className="flex items-center gap-2 mb-2">
-          <span className="text-[11px] font-black uppercase tracking-[1px] text-[#adaaad]">
-            Evolución semanal
-          </span>
-          <EjemploTag />
-        </div>
-        <ImpactoChart />
+        <ImpactoChart snapshots={snapshots} />
 
-        {/* Lista de riesgo: datos REALES desde member_risk */}
-        <div className="flex items-center justify-between mt-6 mb-3">
+        {/* Lista de riesgo (real) */}
+        <div className="flex items-center justify-between mt-8 mb-3">
           <span className="text-[11px] font-black uppercase tracking-[1px] text-[#adaaad]">
             Socios en riesgo — contactar
           </span>
           {typeof riskCount === "number" && riskCount > 0 && (
-            <span className="text-[11px] text-[#5e5e67]">
-              {riskCount} en total
-            </span>
+            <span className="text-[11px] text-[#5e5e67]">{riskCount} en total</span>
           )}
         </div>
 
-        {risk.length === 0 ? (
+        {riskWithEmail.length === 0 ? (
           <div className="bg-[#1f1f22] border border-[rgba(72,71,74,0.12)] rounded-xl p-5 text-center">
             <p className="text-[#f9f5f8] text-sm font-semibold">
               No hay socios en riesgo hoy 🎉
@@ -253,7 +241,7 @@ export default async function ImpactoPage() {
           </div>
         ) : (
           <div className="border border-[rgba(72,71,74,0.15)] rounded-xl overflow-hidden">
-            {risk.map((r) => {
+            {riskWithEmail.map((r) => {
               const name = r.profiles?.full_name ?? "Socio";
               const days = daysSince(r.last_checkin);
               const visita =
@@ -265,6 +253,11 @@ export default async function ImpactoPage() {
               const alto =
                 (Array.isArray(r.signals) && r.signals.includes("absent")) ||
                 r.score >= 2;
+              const mailto = r.email
+                ? `mailto:${r.email}?subject=${encodeURIComponent(
+                    "¿Todo bien? Te esperamos en el gym 💪"
+                  )}`
+                : null;
               return (
                 <div
                   key={r.user_id}
@@ -278,15 +271,27 @@ export default async function ImpactoPage() {
                       {r.reason} · última visita {visita}
                     </p>
                   </div>
-                  <span
-                    className={`shrink-0 text-[10px] font-black uppercase tracking-[0.5px] px-2 py-1 rounded ${
-                      alto
-                        ? "text-[#ff4e8a] bg-[rgba(255,78,138,0.14)]"
-                        : "text-[#ff8a5b] bg-[rgba(255,138,91,0.14)]"
-                    }`}
-                  >
-                    {alto ? "Alto" : "Medio"}
-                  </span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span
+                      className={`text-[10px] font-black uppercase tracking-[0.5px] px-2 py-1 rounded ${
+                        alto
+                          ? "text-[#ff4e8a] bg-[rgba(255,78,138,0.14)]"
+                          : "text-[#ff8a5b] bg-[rgba(255,138,91,0.14)]"
+                      }`}
+                    >
+                      {alto ? "Alto" : "Medio"}
+                    </span>
+                    {mailto ? (
+                      <a
+                        href={mailto}
+                        className="text-[10px] font-black uppercase tracking-[0.5px] text-[#f9f5f8] bg-[#262528] rounded-lg px-3 py-2"
+                      >
+                        Mail
+                      </a>
+                    ) : (
+                      <span className="text-[10px] text-[#5e5e67]">sin mail</span>
+                    )}
+                  </div>
                 </div>
               );
             })}
@@ -340,7 +345,7 @@ export default async function ImpactoPage() {
         </div>
       </section>
 
-      {/* Referidos (ejemplo — depende del sistema de referidos) */}
+      {/* Referidos (embudo — todavía con datos de ejemplo) */}
       <section className="bg-[#131315] border border-[rgba(72,71,74,0.1)] rounded-2xl p-5">
         <div className="flex items-center gap-2 mb-4">
           <h2 className="text-[#f9f5f8] font-black text-lg">Referidos</h2>

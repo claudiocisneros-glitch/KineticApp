@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
 // Evita que Next.js intente pre-renderizar esta página como estática en el
@@ -43,6 +44,19 @@ export default function LoginPage() {
   // Social login y alta de cuenta quedaron fuera del alcance del MVP a
   // propósito (ver decisión de scope). El diseño los muestra porque el
   // prototipo original los incluye, pero todavía no están conectados.
+  function forgotPassword() {
+    alert(
+      "Para recuperar tu contraseña, pedile al staff del gimnasio que te genere una nueva. Te la dan al toque."
+    );
+  }
+
+  async function signInWithGoogle() {
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    });
+  }
+
   function notImplementedYet() {
     alert(
       "Por ahora, para crear una cuenta o usar login social, contactá al staff del gimnasio."
@@ -104,7 +118,7 @@ export default function LoginPage() {
                   </label>
                   <button
                     type="button"
-                    onClick={notImplementedYet}
+                    onClick={forgotPassword}
                     className="text-[#adaaad] text-[10px] font-bold tracking-[1px] uppercase"
                   >
                     ¿Olvidaste tu contraseña?
@@ -143,33 +157,20 @@ export default function LoginPage() {
               <div className="bg-[rgba(72,71,74,0.2)] h-px flex-1" />
             </div>
 
-            <div className="grid grid-cols-2 gap-4 w-full">
-              <button
-                onClick={notImplementedYet}
-                className="bg-[#262528] border border-[rgba(72,71,74,0.1)] rounded-xl flex items-center justify-center gap-2 py-[15px]"
-              >
-                <span className="text-[#f9f5f8] text-[10px] font-bold uppercase tracking-[0.5px]">
-                  Apple
-                </span>
-              </button>
-              <button
-                onClick={notImplementedYet}
-                className="bg-[#262528] border border-[rgba(72,71,74,0.1)] rounded-xl flex items-center justify-center gap-2 py-[15px]"
-              >
-                <span className="text-[#f9f5f8] text-[10px] font-bold uppercase tracking-[0.5px]">
-                  Google
-                </span>
-              </button>
-            </div>
+            <button
+              onClick={signInWithGoogle}
+              className="bg-[#262528] border border-[rgba(72,71,74,0.1)] rounded-xl flex items-center justify-center gap-2 py-[15px] w-full"
+            >
+              <span className="text-[#f9f5f8] text-sm font-bold">
+                Continuar con Google
+              </span>
+            </button>
 
             <p className="text-center text-xs pt-2 w-full">
               <span className="text-[#adaaad]">¿No tenés una cuenta? </span>
-              <button
-                onClick={notImplementedYet}
-                className="text-[#ff66b6] font-medium"
-              >
+              <Link href="/registro" className="text-[#ff66b6] font-medium">
                 Crear cuenta
-              </button>
+              </Link>
             </p>
           </div>
         </div>

@@ -12,6 +12,7 @@ import type { StaffRole } from "@/lib/auth/staff";
 const NAV_ITEMS: { href: string; label: string; roles: StaffRole[] }[] = [
   { href: "/admin", label: "Inicio", roles: ["owner", "reception"] },
   { href: "/admin/users", label: "Socios", roles: ["owner", "reception"] },
+  { href: "/admin/solicitudes", label: "Solicitudes", roles: ["owner", "reception"] },
   {
     href: "/admin/redemptions",
     label: "Canjes",

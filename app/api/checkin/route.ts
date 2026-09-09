@@ -40,6 +40,13 @@ export async function POST(req: Request) {
     .eq("id", user.id)
     .single();
 
+  if (profile?.status && profile.status !== "active") {
+    return NextResponse.json(
+      { error: "Tu cuenta está pendiente de aprobación del staff." },
+      { status: 403 }
+    );
+  }
+
   const { count: totalCheckinsBefore } = await supabase
     .from("checkins")
     .select("*", { count: "exact", head: true })

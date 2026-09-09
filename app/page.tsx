@@ -47,6 +47,10 @@ export default async function HomePage() {
         .order("earned_at", { ascending: false }),
     ]);
 
+  if (profile?.status === "pending") {
+    redirect("/pendiente");
+  }
+
   const balance = balanceRow?.balance ?? 0;
 
   // Referidos premiados del socio (para el progreso del badge). Va con admin

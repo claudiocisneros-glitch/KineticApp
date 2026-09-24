@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import type { Reto60Status } from "@/lib/reto60";
 
 const GRAD =
@@ -23,6 +24,8 @@ export default function RetosView({
 }: {
   challenges: ChallengeView[];
 }) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [tab, setTab] = useState<"curso" | "final">("curso");
   const [showIntro, setShowIntro] = useState<ChallengeView | null>(null);
 
@@ -34,6 +37,18 @@ export default function RetosView({
   );
 
   useEffect(() => {
+    // ?info=<id> viene del ícono de ayuda en otras pantallas (ej. check-in):
+    // fuerza la explicación aunque ya la haya visto, porque el pedido acá
+    // es explícito. Si no vino ese param, se comporta como siempre — se
+    // muestra sola la primera vez que ve un reto activo.
+    const infoId = searchParams.get("info");
+    if (infoId) {
+      const match = challenges.find((c) => c.id === infoId);
+      if (match) {
+        setShowIntro(match);
+        return;
+      }
+    }
     const first = enCurso[0];
     if (!first) return;
     try {
@@ -51,6 +66,11 @@ export default function RetosView({
       } catch {}
     }
     setShowIntro(null);
+    // Si llegamos por el ícono de ayuda, limpiamos el query param para que
+    // un refresh no vuelva a abrir el modal solo.
+    if (searchParams.get("info")) {
+      router.replace("/retos");
+    }
   }
 
   const list = tab === "curso" ? enCurso : finalizados;

@@ -21,7 +21,6 @@ import {
 
 const imgLogoIcon = "/logo.png";
 const imgBellIcon = "/bell-icon.png";
-const imgQrCodeIcon = "/qr-icon.png";
 
 export default async function HomePage() {
   const supabase = createClient();
@@ -206,34 +205,6 @@ export default async function HomePage() {
         )}
 
         {showPro && <UpcomingActivities />}
-
-        {/* Boost your points — diseño exacto de Figma, apunta al check-in real */}
-        <section className="bg-[#131315] border border-[rgba(255,144,109,0.2)] rounded-[24px] flex flex-col gap-6 items-center px-8 pt-[57px] pb-8 relative overflow-hidden">
-          <img
-            src={imgQrCodeIcon}
-            alt=""
-            className="absolute size-24 -top-1 left-1/2 -translate-x-1/2 opacity-90"
-          />
-          <div className="flex flex-col items-center gap-2 relative z-10">
-            <h3 className="text-[#f9f5f8] font-black italic text-xl uppercase tracking-[-1px] text-center">
-              Sumá más puntos
-            </h3>
-            <p className="text-[#adaaad] text-sm text-center max-w-[320px] leading-[22.75px]">
-              ¡No te olvides de hacer check-in! Escaneá el QR del gimnasio para
-              registrar esta sesión y sumar puntos.
-            </p>
-          </div>
-          <Link
-            href="/checkin"
-            className="rounded-2xl py-4 w-full text-center font-black text-sm text-black uppercase tracking-[1.4px] shadow-[0px_4px_12px_rgba(255,120,77,0.3)] relative z-10"
-            style={{
-              backgroundImage:
-                "linear-gradient(135deg, rgb(255, 120, 77) 0%, rgb(255, 102, 182) 100%)",
-            }}
-          >
-            Mostrame cómo
-          </Link>
-        </section>
 
         {showPro && <SponsorsStrip />}
       </main>

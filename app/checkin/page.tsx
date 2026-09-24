@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Html5Qrcode } from "html5-qrcode";
 import Reto60Celebration from "@/components/Reto60Celebration";
 
@@ -180,16 +181,25 @@ export default function CheckinPage() {
 
           {result.reto60 && (
             <div className="mt-6 bg-[#131315] border border-[rgba(72,71,74,0.15)] rounded-2xl p-4">
-              {result.reto60.justCrossed ? (
-                <p className="text-[#f9f5f8] font-bold text-sm">
-                  🎉 {result.reto60.justCrossed.message}
-                </p>
-              ) : (
-                <p className="text-[#f9f5f8] text-sm">
-                  Reto 60: {result.reto60.progress} de {result.reto60.target}.
-                  ¡Seguí así!
-                </p>
-              )}
+              <div className="flex items-center justify-center gap-1.5">
+                {result.reto60.justCrossed ? (
+                  <p className="text-[#f9f5f8] font-bold text-sm">
+                    🎉 {result.reto60.justCrossed.message}
+                  </p>
+                ) : (
+                  <p className="text-[#f9f5f8] text-sm">
+                    Reto 60: {result.reto60.progress} de {result.reto60.target}.
+                    ¡Seguí así!
+                  </p>
+                )}
+                <Link
+                  href="/retos?info=reto60"
+                  aria-label="Qué es el Reto 60"
+                  className="shrink-0 size-4 rounded-full bg-[#262528] text-[#adaaad] text-[10px] font-black flex items-center justify-center"
+                >
+                  ?
+                </Link>
+              </div>
               <div className="h-2 bg-[#232329] rounded-full overflow-hidden mt-3">
                 <div
                   className="h-full rounded-full"
@@ -216,26 +226,13 @@ export default function CheckinPage() {
               <p className="text-[#adaaad] text-xs mt-1 mb-3">
                 Cargá su código y los dos suman KP. Tenés 7 días desde tu alta.
               </p>
-              <div className="flex gap-2">
-                <input
-                  value={refCode}
-                  onChange={(e) => setRefCode(e.target.value.toUpperCase())}
-                  placeholder="Código"
-                  disabled={refStatus === "loading"}
-                  className="bg-[#0e0e10] border border-[rgba(72,71,74,0.2)] rounded-xl px-3 py-2 text-sm text-[#f9f5f8] placeholder:text-[rgba(118,117,119,0.5)] flex-1 focus:outline-none focus:border-[#ff906d] disabled:opacity-50"
-                />
-                <button
-                  onClick={applyReferral}
-                  disabled={refStatus === "loading" || !refCode.trim()}
-                  className="rounded-xl px-4 text-black text-xs font-black uppercase tracking-[0.5px] disabled:opacity-50"
-                  style={{
-                    backgroundImage:
-                      "linear-gradient(135deg, rgb(255, 120, 77) 0%, rgb(255, 102, 182) 100%)",
-                  }}
-                >
-                  {refStatus === "loading" ? "..." : "Cargar"}
-                </button>
-              </div>
+              <input
+                value={refCode}
+                onChange={(e) => setRefCode(e.target.value.toUpperCase())}
+                placeholder="Código"
+                disabled={refStatus === "loading"}
+                className="w-full bg-[#0e0e10] border border-[rgba(72,71,74,0.2)] rounded-xl px-3 py-2.5 text-sm text-[#f9f5f8] placeholder:text-[rgba(118,117,119,0.5)] focus:outline-none focus:border-[#ff906d] disabled:opacity-50"
+              />
               {refMessage && (
                 <p
                   className={`text-xs mt-2 ${
@@ -245,12 +242,26 @@ export default function CheckinPage() {
                   {refMessage}
                 </p>
               )}
-              <button
-                onClick={() => router.push("/")}
-                className="text-[#adaaad] text-xs underline mt-3"
-              >
-                Saltar
-              </button>
+              <div className="flex flex-col gap-2 mt-3">
+                <button
+                  onClick={applyReferral}
+                  disabled={refStatus === "loading" || !refCode.trim()}
+                  className="w-full rounded-xl py-3 text-black text-xs font-black uppercase tracking-[0.5px] disabled:opacity-50"
+                  style={{
+                    backgroundImage:
+                      "linear-gradient(135deg, rgb(255, 120, 77) 0%, rgb(255, 102, 182) 100%)",
+                  }}
+                >
+                  {refStatus === "loading" ? "..." : "Cargar"}
+                </button>
+                <button
+                  onClick={() => router.push("/")}
+                  disabled={refStatus === "loading"}
+                  className="w-full rounded-xl py-3 text-[#adaaad] text-xs font-black uppercase tracking-[0.5px] bg-[#1f1f22] disabled:opacity-50"
+                >
+                  Más tarde
+                </button>
+              </div>
             </div>
           )}
 

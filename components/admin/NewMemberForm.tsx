@@ -7,7 +7,8 @@ type Created = {
   fullName: string;
   email: string;
   tempPassword: string;
-  referralCode: string | null;
+  referralApplied: boolean;
+  referralAttempted: boolean;
 };
 
 const inputCls =
@@ -42,7 +43,7 @@ export default function NewMemberForm() {
       setError(data.error ?? "No se pudo crear el socio.");
       return;
     }
-    setCreated(data);
+    setCreated({ ...data, referralAttempted: !!refCode.trim() });
     setFullName("");
     setEmail("");
     setRefCode("");
@@ -63,10 +64,13 @@ export default function NewMemberForm() {
         <div className="flex flex-col gap-2 text-sm">
           <Row label="Email" value={created.email} />
           <Row label="Contraseña temporal" value={created.tempPassword} mono />
-          {created.referralCode && (
-            <Row label="Su código de referido" value={created.referralCode} mono />
-          )}
         </div>
+        {created.referralAttempted && !created.referralApplied && (
+          <p className="text-[#ff66b6] text-xs mt-3">
+            El código de referido no se pudo vincular (no existe o ya estaba
+            usado). El socio todavía puede cargarlo él mismo desde la app.
+          </p>
+        )}
         <button
           onClick={() => setCreated(null)}
           className="mt-4 rounded-xl px-5 py-2.5 text-black text-xs font-black uppercase tracking-[0.5px]"
@@ -113,18 +117,12 @@ export default function NewMemberForm() {
           placeholder="Email"
           className={inputCls}
         />
-        <div className="flex flex-col gap-1">
-          <input
-            value={refCode}
-            onChange={(e) => setRefCode(e.target.value.toUpperCase())}
-            placeholder="Código de quien lo trajo (opcional)"
-            className={inputCls}
-          />
-          <p className="text-[#adaaad]/70 text-[11px] pl-1">
-            Si un socio lo recomendó, cargá su código. El premio se otorga en el
-            primer check-in del nuevo socio.
-          </p>
-        </div>
+        <input
+          value={refCode}
+          onChange={(e) => setRefCode(e.target.value.toUpperCase())}
+          placeholder="Código de quien lo trajo (opcional)"
+          className={inputCls}
+        />
 
         {error && <p className="text-[#ff66b6] text-xs">{error}</p>}
 

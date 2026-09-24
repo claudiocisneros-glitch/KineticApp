@@ -17,7 +17,6 @@ export default function RegistroPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [refCode, setRefCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,15 +47,9 @@ export default function RegistroPage() {
       return;
     }
 
-    // Si cargó código de referido, lo vinculamos (server-side).
-    if (refCode.trim()) {
-      await fetch("/api/registro/referral", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: refCode.trim() }),
-      }).catch(() => {});
-    }
-
+    // El código de referido ya no se carga acá: lo pone el staff al
+    // aprobar la solicitud (ver /admin/solicitudes). Antes vivía en este
+    // formulario como autoservicio; se movió a propósito.
     router.push("/pendiente");
   }
 
@@ -111,12 +104,6 @@ export default function RegistroPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Contraseña"
-              className={inputCls}
-            />
-            <input
-              value={refCode}
-              onChange={(e) => setRefCode(e.target.value.toUpperCase())}
-              placeholder="Código de referido (opcional)"
               className={inputCls}
             />
             {error && <p className="text-[#ff66b6] text-sm">{error}</p>}

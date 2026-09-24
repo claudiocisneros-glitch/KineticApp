@@ -2,12 +2,18 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isStaff } from "@/lib/auth/staff";
+import { applyReferralCode } from "@/lib/referrals";
 
 // Alta manual de socio. La hace el staff (dueño o recepción). Como el staff
 // solo da de alta a quien ya pagó/se asoció, el alta ES la confirmación del
 // pago. Crea el usuario en Auth (el trigger handle_new_user arma el profile
-// con un referral_code por default) y, si se cargó un código, guarda quién
-// lo trajo.
+// con un referral_code por default) y lo activa directo.
+//
+// El código de quien lo recomendó es opcional acá: si el socio se lo dio al
+// staff en el mostrador, se carga en el momento (vía lib/referrals.ts, el
+// mismo código que usa el socio desde la app). Si no lo dio, no pasa nada —
+// el socio todavía puede cargarlo él mismo hasta 7 días después de su
+// primer check-in. El que lo carga primero gana la carrera.
 
 function tempPassword(): string {
   // Contraseña temporal legible para pasarle al socio.
@@ -43,8 +49,8 @@ export async function POST(req: Request) {
 
   const admin = createAdminClient();
 
-  // Si vino código de referido, validarlo ANTES de crear al socio.
-  let referrerId: string | null = null;
+  // Si vino código, se valida ANTES de crear al socio — así un código
+  // mal tipeado no te deja con una cuenta ya creada para corregir después.
   if (referral_code?.trim()) {
     const code = referral_code.trim().toUpperCase();
     const { data: ref } = await admin
@@ -58,7 +64,6 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-    referrerId = ref.id;
   }
 
   const password = tempPassword();
@@ -79,25 +84,29 @@ export async function POST(req: Request) {
 
   const newId = created.user.id;
 
-  if (referrerId) {
-    await admin
-      .from("profiles")
-      .update({ referred_by: referrerId })
-      .eq("id", newId);
-  }
+  // El alta manual ES la confirmación del pago (ver comentario arriba):
+  // este socio no debe pasar por la cola de /admin/solicitudes. Antes esto
+  // no se seteaba y el profile quedaba en 'pending' (default de la columna),
+  // así que el socio recién creado —con contraseña ya entregada— igual
+  // aparecía pidiendo una segunda aprobación redundante.
+  await admin.from("profiles").update({ status: "active" }).eq("id", newId);
 
-  // El referral_code lo puso el default de la columna al crear el profile.
-  const { data: prof } = await admin
-    .from("profiles")
-    .select("referral_code")
-    .eq("id", newId)
-    .maybeSingle();
+  let referralApplied = false;
+  if (referral_code?.trim()) {
+    // Recién creado, sin check-ins todavía: la ventana ni arrancó, así que
+    // esto no debería poder fallar por plazo vencido — pero igual no
+    // rompemos el alta si falla por otra razón (código ya usado, carrera
+    // perdida contra el propio socio). El socio siempre puede cargarlo
+    // después desde la app.
+    const result = await applyReferralCode(admin, newId, referral_code);
+    referralApplied = result.ok;
+  }
 
   return NextResponse.json({
     ok: true,
     fullName: full_name.trim(),
     email: email.trim().toLowerCase(),
     tempPassword: password,
-    referralCode: prof?.referral_code ?? null,
+    referralApplied,
   });
 }

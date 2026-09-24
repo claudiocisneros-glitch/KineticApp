@@ -36,6 +36,7 @@ type CheckinResult = {
   breakdown: { total: number };
   newBadges: string[];
   reto60: Reto60Result;
+  referralPrompt: boolean;
 };
 
 export default function CheckinPage() {
@@ -45,6 +46,11 @@ export default function CheckinPage() {
   >("scanning");
   const [message, setMessage] = useState<string | null>(null);
   const [result, setResult] = useState<CheckinResult | null>(null);
+  const [refCode, setRefCode] = useState("");
+  const [refStatus, setRefStatus] = useState<
+    "idle" | "loading" | "applied" | "error"
+  >("idle");
+  const [refMessage, setRefMessage] = useState<string | null>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
 
   useEffect(() => {
@@ -115,11 +121,36 @@ export default function CheckinPage() {
     setStatus("success");
 
     // Si completó el Reto 60, mostramos la celebración y esperamos el tap.
-    // Si no, redirigimos solos a los 2.5s.
+    // Si corresponde ofrecerle cargar un código de referido, tampoco
+    // redirigimos solos — que decida él si lo carga o lo salta.
     const completedReto = data.newBadges?.includes("reto_60");
-    if (!completedReto) {
+    if (!completedReto && !data.referralPrompt) {
       setTimeout(() => router.push("/"), 2500);
     }
+  }
+
+  async function applyReferral() {
+    if (!refCode.trim()) return;
+    setRefStatus("loading");
+    setRefMessage(null);
+    const res = await fetch("/api/referidos/aplicar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: refCode.trim() }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setRefStatus("error");
+      setRefMessage(data.error ?? "No se pudo cargar el código.");
+      return;
+    }
+    setRefStatus("applied");
+    setRefMessage(
+      data.welcomeKp > 0
+        ? `¡Listo! +${data.welcomeKp} KP de bienvenida.`
+        : "¡Código cargado!"
+    );
+    setTimeout(() => router.push("/"), 2000);
   }
 
   // Celebración a pantalla completa al completar el reto
@@ -175,6 +206,56 @@ export default function CheckinPage() {
                 />
               </div>
             </div>
+          )}
+
+          {result.referralPrompt && refStatus !== "applied" && (
+            <div className="mt-6 bg-[#131315] border border-[rgba(72,71,74,0.15)] rounded-2xl p-4 text-left">
+              <p className="text-[#f9f5f8] text-sm font-bold">
+                ¿Te recomendó un socio?
+              </p>
+              <p className="text-[#adaaad] text-xs mt-1 mb-3">
+                Cargá su código y los dos suman KP. Tenés 7 días desde tu alta.
+              </p>
+              <div className="flex gap-2">
+                <input
+                  value={refCode}
+                  onChange={(e) => setRefCode(e.target.value.toUpperCase())}
+                  placeholder="Código"
+                  disabled={refStatus === "loading"}
+                  className="bg-[#0e0e10] border border-[rgba(72,71,74,0.2)] rounded-xl px-3 py-2 text-sm text-[#f9f5f8] placeholder:text-[rgba(118,117,119,0.5)] flex-1 focus:outline-none focus:border-[#ff906d] disabled:opacity-50"
+                />
+                <button
+                  onClick={applyReferral}
+                  disabled={refStatus === "loading" || !refCode.trim()}
+                  className="rounded-xl px-4 text-black text-xs font-black uppercase tracking-[0.5px] disabled:opacity-50"
+                  style={{
+                    backgroundImage:
+                      "linear-gradient(135deg, rgb(255, 120, 77) 0%, rgb(255, 102, 182) 100%)",
+                  }}
+                >
+                  {refStatus === "loading" ? "..." : "Cargar"}
+                </button>
+              </div>
+              {refMessage && (
+                <p
+                  className={`text-xs mt-2 ${
+                    refStatus === "error" ? "text-[#ff66b6]" : "text-[#adaaad]"
+                  }`}
+                >
+                  {refMessage}
+                </p>
+              )}
+              <button
+                onClick={() => router.push("/")}
+                className="text-[#adaaad] text-xs underline mt-3"
+              >
+                Saltar
+              </button>
+            </div>
+          )}
+
+          {result.referralPrompt && refStatus === "applied" && refMessage && (
+            <p className="text-[#ff906d] text-sm font-bold mt-4">{refMessage}</p>
           )}
         </div>
       )}

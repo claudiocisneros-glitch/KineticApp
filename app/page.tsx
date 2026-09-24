@@ -4,10 +4,12 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isStaff } from "@/lib/auth/staff";
 import { getViewMode } from "@/lib/view-mode";
+import { getReferralWindowStatus } from "@/lib/referrals";
 import BottomNav from "@/components/BottomNav";
 import AvatarMenu from "@/components/AvatarMenu";
 import AvatarGlyph from "@/components/AvatarGlyph";
 import InviteCard from "@/components/InviteCard";
+import ReferralReminderModal from "@/components/ReferralReminderModal";
 import {
   AiSearchBar,
   KpiGrid,
@@ -63,6 +65,15 @@ export default async function HomePage() {
     .not("referral_rewarded_at", "is", null);
   const staff = await isStaff(user);
   const showPro = staff && getViewMode() === "pro";
+
+  // Recordatorio de código de referido: solo si todavía no tiene uno
+  // vinculado, ya hizo al menos un check-in (si nunca vino, el plazo ni
+  // arrancó) y sigue dentro de los 7 días desde ese primer check-in.
+  const referralStatus = await getReferralWindowStatus(adminClient, user!.id);
+  const showReferralReminder =
+    !profile?.referred_by &&
+    referralStatus.hasFirstCheckin &&
+    referralStatus.withinWindow;
 
   return (
     <div className="bg-[#0e0e10] min-h-screen">
@@ -228,6 +239,10 @@ export default async function HomePage() {
       </main>
 
       <BottomNav showPro={showPro} />
+
+      {showReferralReminder && (
+        <ReferralReminderModal daysLeft={referralStatus.daysLeft} />
+      )}
     </div>
   );
 }

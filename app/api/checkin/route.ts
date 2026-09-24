@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { calculatePoints, evaluateBadges } from "@/lib/points-engine";
 import { RETO60 } from "@/lib/reto60";
+import { getReferralWindowStatus } from "@/lib/referrals";
 
 export async function POST(req: Request) {
   const supabase = createClient(); // identifica quién es el usuario (RLS normal)
@@ -255,20 +256,19 @@ export async function POST(req: Request) {
         : null;
   }
 
-  // 8. Referido: si es el PRIMER check-in y vino recomendado, se premia a
-  //    ambos (el pago está implícito en que el staff lo dio de alta).
-  let referral: { welcomeKp: number } | null = null;
-  if ((totalCheckinsBefore ?? 0) === 0) {
-    const { data: refRes } = await admin.rpc("reward_referral", {
-      p_referred_id: user.id,
-    });
-    if (refRes?.rewarded) referral = { welcomeKp: refRes.welcome_kp };
-  }
+  // 8. Referido: el código lo carga el socio (acá o desde el modal del
+  //    home) o el staff (en el alta). Este endpoint no aplica el código
+  //    (eso vive en lib/referrals.ts) — acá solo le avisamos al frontend
+  //    si corresponde ofrecer el campo: falta vincularlo y, como este
+  //    check-in ya quedó insertado arriba, la ventana de 7 días ya arrancó
+  //    a contar desde hoy si este era el primero.
+  const referralStatus = await getReferralWindowStatus(admin, user.id);
+  const referralPrompt = !profile.referred_by && referralStatus.withinWindow;
 
   return NextResponse.json({
     breakdown,
     newBadges: newBadgeCodes,
     reto60,
-    referral,
+    referralPrompt,
   });
 }

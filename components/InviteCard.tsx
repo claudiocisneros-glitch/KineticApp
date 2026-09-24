@@ -19,7 +19,7 @@ function GiftIcon() {
       strokeWidth="1.4"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="size-24 text-[#f9f5f8]/90"
+      className="size-14 text-[#f9f5f8]/90"
     >
       <rect x="3" y="9" width="18" height="11" rx="1.2" />
       <path d="M3 13h18" />
@@ -55,8 +55,8 @@ export default function InviteCard({
   const remaining = Math.max(0, threshold - referredCount);
 
   return (
-    <section className="bg-[#131315] border border-[rgba(255,144,109,0.2)] rounded-[24px] flex flex-col gap-6 items-center px-8 pt-[57px] pb-8 relative overflow-hidden">
-      <div className="absolute -top-1 left-1/2 -translate-x-1/2 opacity-90">
+    <section className="bg-[#131315] border border-[rgba(255,144,109,0.2)] rounded-[24px] flex flex-col gap-6 items-center px-8 pt-[72px] pb-8 relative overflow-hidden">
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 opacity-90">
         <GiftIcon />
       </div>
 

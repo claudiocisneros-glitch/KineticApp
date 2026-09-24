@@ -1,5 +1,27 @@
-cat > ~/setup-backups.sh << 'SCRIPT_END'
 #!/usr/bin/env bash
+# ============================================================
+# KINETIC — Setup de backups (correr UNA VEZ en la VM de Oracle)
+#
+# Uso:
+#   scp -i tu-clave.key setup-backups.sh ubuntu@IP_DE_TU_VM:~/
+#   ssh -i tu-clave.key ubuntu@IP_DE_TU_VM
+#   chmod +x setup-backups.sh
+#   sudo ./setup-backups.sh
+#
+# Qué hace:
+#   1. Detecta (o pregunta) el nombre del contenedor de Postgres
+#   2. Crea /opt/kinetic-backups/backup-db.sh (dump + gzip + rotación 7 días)
+#   3. Instala rclone si no está, y configura el remote contra tu bucket
+#      de Object Storage (te pide las credenciales una sola vez, no se
+#      guardan en este script — quedan en la config de rclone, en la VM)
+#   4. Agrega la subida a Object Storage al final del script de backup
+#   5. Prueba todo corriendo un backup real ahora mismo
+#   6. Deja programado el cron diario a las 4am
+#
+# Lo único que este script NO hace (es un toggle en la consola web de
+# Oracle, no algo para scriptear por SSH): activar el backup automático
+# del Boot Volume. Al final te recuerda cómo.
+# ============================================================
 set -euo pipefail
 
 if [ "$EUID" -ne 0 ]; then
@@ -125,5 +147,3 @@ echo "(no se puede hacer desde acá por SSH):"
 echo "  Compute > Instances > tu instancia > Boot Volume > click en el"
 echo "  volumen > Backups > Enable Backup Policy > elegí 'Bronze'"
 echo "============================================================"
-SCRIPT_END
-chmod +x ~/setup-backups.sh
